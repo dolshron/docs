@@ -1,5 +1,5 @@
 ---
-title: 'Issue a New Corporate Virtual Card in NadaPay'
+title: 'Issue a New NadaPay Corporate Virtual Card via API'
 sidebarTitle: 'Issue Card'
 description: 'Create a corporate virtual card linked to a NadaPay wallet by posting a nadapayCode and an optional spending limit to the cards endpoint.'
 ---
@@ -8,7 +8,7 @@ Issuing a card creates a new corporate virtual card and ties it to an existing N
 
 ## Endpoint
 
-```
+```text
 POST /organization/cards
 ```
 
@@ -16,7 +16,7 @@ POST /organization/cards
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organization/cards \
+  --url https://core.nadapay.io/api/v1/organization/cards \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{

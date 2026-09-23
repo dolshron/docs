@@ -1,5 +1,5 @@
 ---
-title: 'Execute a Payout Transaction with NadaPay'
+title: 'Execute a Payout Transaction Using a Locked Quote ID'
 sidebarTitle: 'Execute Transaction'
 description: 'Submit a quoted payout transaction to NadaPay. Pass the quoteId from Generate Quote and matching source and destination details to trigger the transfer.'
 ---
@@ -24,7 +24,7 @@ Before calling `POST /transactions/execute`, confirm all of the following:
 
 ```bash
 curl --request POST \
-  --url $baseUrl/transactions/execute \
+  --url https://core.nadapay.io/api/v1/transactions/execute \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \

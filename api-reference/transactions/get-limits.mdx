@@ -1,5 +1,5 @@
 ---
-title: 'GET /transactions/limits — Check Transaction Limits'
+title: 'POST /transactions/limits — Check Transaction Limits'
 sidebarTitle: 'Get Limits'
 description: 'Check the minimum, maximum, and daily transaction limits for a currency–country–rail corridor before generating a quote or executing a payout.'
 ---
@@ -8,7 +8,7 @@ The limits endpoint returns the minimum amount, maximum amount, and daily limit 
 
 ## Endpoint
 
-```
+```http
 POST https://core.nadapay.io/api/v1/transactions/limits
 ```
 
@@ -83,7 +83,7 @@ A `200` response returns the limit constraints for the requested corridor.
 
 Before calling Generate Quote, confirm your transaction amount satisfies all three constraints:
 
-```
+```text
 transaction_amount >= minAmount
 transaction_amount <= maxAmount
 daily_volume_so_far + transaction_amount <= dailyLimit

@@ -1,10 +1,10 @@
 ---
-title: 'GET /organization/cards/:id/details — Get Full Card Credentials'
+title: 'Retrieve Full Secure Card Credentials: PAN and CVV'
 sidebarTitle: 'Secure Details'
-description: 'Retrieve the full PAN, CVV, and expiry for a virtual card. Server-side only — never log the response or return it to browser or mobile clients.'
+description: 'Retrieve the full PAN and CVV for a virtual card. Server-side only — never log the response or return sensitive credentials to browser or mobile clients.'
 ---
 
-This endpoint returns the complete card credentials for a specific virtual card, including the full 16-digit PAN, the CVV, and the expiry date. You should only call it when you have a specific, controlled need for the raw card number — for example, to display it once inside a PCI-compliant iframe so the cardholder can copy it, or to pass credentials directly to a partner vault. For all other purposes — listing cards, checking status, building dashboards — use [Get Card](/api-reference/cards/get) instead, which never exposes sensitive data.
+This endpoint returns the complete card credentials for a specific virtual card, including the full 16-digit PAN and the CVV. You should only call it when you have a specific, controlled need for the raw card number — for example, to display it once inside a PCI-compliant iframe so the cardholder can copy it, or to pass credentials directly to a partner vault. For all other purposes — listing cards, checking status, building dashboards — use [Get Card](/api-reference/cards/get) instead, which never exposes sensitive data.
 
 <Warning>
   **Server-side only.** Never call this endpoint from a browser, mobile app, or any client that runs outside your secure backend. Never log the response body — doing so risks persisting raw PAN and CVV data outside a controlled environment. Never return the full PAN or CVV directly to a frontend client; if your UI must display the card number, proxy it through a PCI-compliant iframe or tokenisation layer that you control.
@@ -12,7 +12,7 @@ This endpoint returns the complete card credentials for a specific virtual card,
 
 ## Endpoint
 
-```
+```text
 GET https://core.nadapay.io/api/v1/organization/cards/:id/details
 ```
 
@@ -61,10 +61,6 @@ curl --request GET \
     <ResponseField name="cvv" type="string">
       The 3-digit card verification value. Treat with the same PCI controls as the PAN.
     </ResponseField>
-
-    <ResponseField name="expiry" type="string">
-      Card expiry in `MM/YY` format.
-    </ResponseField>
   </Expandable>
 </ResponseField>
 
@@ -77,8 +73,7 @@ curl --request GET \
   "message": "Secure details retrieved",
   "data": {
     "pan": "4000000000004242",
-    "cvv": "123",
-    "expiry": "07/27"
+    "cvv": "123"
   }
 }
 ```

@@ -1,5 +1,5 @@
 ---
-title: 'List, View, and Manage Your NadaPay Virtual Cards'
+title: 'List, View, and Manage NadaPay Virtual Cards via API'
 sidebarTitle: 'Manage Cards'
 description: 'List all cards, fetch safe metadata, retrieve secure PAN/CVV from your backend, activate a card by setting its PIN, and reassign it to a different wallet.'
 ---
@@ -22,7 +22,7 @@ Retrieve a paginated list of all cards under your organization. This endpoint re
 
 ### Endpoint
 
-```
+```text
 GET /organization/cards
 ```
 
@@ -30,7 +30,7 @@ GET /organization/cards
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organization/cards?page=1&limit=10&sortBy=createdAt&sortOrder=desc" \
+  --url "https://core.nadapay.io/api/v1/organization/cards?page=1&limit=10&sortBy=createdAt&sortOrder=desc" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -80,7 +80,7 @@ Fetch metadata for a single card by its ID. Like the list endpoint, this never e
 
 ### Endpoint
 
-```
+```text
 GET /organization/cards/:id
 ```
 
@@ -88,7 +88,7 @@ GET /organization/cards/:id
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organization/cards/{id}" \
+  --url "https://core.nadapay.io/api/v1/organization/cards/{id}" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -120,7 +120,7 @@ Retrieve the full PAN and CVV for a card. This is a security-critical operation 
 
 ### Endpoint
 
-```
+```text
 GET /organization/cards/:id/details
 ```
 
@@ -132,7 +132,7 @@ Only call this endpoint when you have a specific, secure need for the full card 
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organization/cards/{id}/details" \
+  --url "https://core.nadapay.io/api/v1/organization/cards/{id}/details" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -162,7 +162,7 @@ Set the PIN on a card to activate it. A card remains `inactive` and cannot proce
 
 ### Endpoint
 
-```
+```text
 POST /organization/cards/:id/pin
 ```
 
@@ -170,7 +170,7 @@ POST /organization/cards/:id/pin
 
 ```bash
 curl --request POST \
-  --url "$baseUrl/organization/cards/{id}/pin" \
+  --url "https://core.nadapay.io/api/v1/organization/cards/{id}/pin" \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -210,7 +210,7 @@ Reassign a card to a different wallet. Use this when a card needs to draw from a
 
 ### Endpoint
 
-```
+```text
 PATCH /organization/cards/:id/account
 ```
 
@@ -222,7 +222,7 @@ Switching accounts changes only which wallet the card debits. The card number, P
 
 ```bash
 curl --request PATCH \
-  --url "$baseUrl/organization/cards/{id}/account" \
+  --url "https://core.nadapay.io/api/v1/organization/cards/{id}/account" \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{

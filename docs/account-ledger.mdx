@@ -1,5 +1,5 @@
 ---
-title: 'View the Transaction Ledger for a NadaPay Wallet'
+title: 'Fetch and Page Through the Transaction Ledger for a Wallet'
 sidebarTitle: 'Account Ledger'
 description: 'Retrieve paginated debit and credit entries for any NadaPay wallet. Use the ledger for reconciliation, reporting, and auditing transaction history.'
 ---
@@ -10,7 +10,7 @@ Every NadaPay wallet maintains a full double-entry ledger of all funds movement 
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organizations/accounts/acc-uuid-123/ledger?page=1&limit=20&sortBy=createdAt&sortOrder=desc" \
+  --url "https://core.nadapay.io/api/v1/organizations/accounts/acc-uuid-123/ledger?page=1&limit=20&sortBy=createdAt&sortOrder=desc" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -121,7 +121,7 @@ async function fetchAllLedgerEntries(accountId) {
 
   while (page <= totalPages) {
     const response = await fetch(
-      `${baseUrl}/organizations/accounts/${accountId}/ledger?page=${page}&limit=50&sortOrder=asc`,
+      `https://core.nadapay.io/api/v1/organizations/accounts/${accountId}/ledger?page=${page}&limit=50&sortOrder=asc`,
       { headers: { 'x-api-key': process.env.NADAPAY_API_KEY } }
     );
     const result = await response.json();

@@ -1,5 +1,5 @@
 ---
-title: 'List and Retrieve NadaPay Financial Accounts'
+title: 'List, Retrieve, and Upgrade NadaPay Financial Accounts'
 sidebarTitle: 'Financial Accounts'
 description: 'Fetch all wallets your organization holds, retrieve a single account by ID or NadaPay code, and upgrade a fiat wallet to a virtual bank account.'
 ---
@@ -12,7 +12,7 @@ Call `GET /organizations/accounts` to retrieve all wallets your organization hol
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organizations/accounts?status=ACTIVE&currency=USD" \
+  --url "https://core.nadapay.io/api/v1/organizations/accounts?status=ACTIVE&currency=USD" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -69,7 +69,7 @@ Call `GET /organizations/accounts/{accountId}` to retrieve the full details of o
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organizations/accounts/acc-uuid-123" \
+  --url "https://core.nadapay.io/api/v1/organizations/accounts/acc-uuid-123" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -97,7 +97,7 @@ Use `GET /organizations/nadapay-code/{code}` to resolve a `WAL-xxx` NadaPay code
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organizations/nadapay-code/WAL-123" \
+  --url "https://core.nadapay.io/api/v1/organizations/nadapay-code/WAL-123" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -123,7 +123,7 @@ This is a one-time action per currency. Once upgraded, the virtual account numbe
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organizations/upgrade-virtual-account \
+  --url https://core.nadapay.io/api/v1/organizations/upgrade-virtual-account \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \

@@ -1,5 +1,5 @@
 ---
-title: 'Manage Customer Profiles in NadaPay'
+title: 'Create and Manage NadaPay Customer Profiles via API'
 sidebarTitle: 'Customers'
 description: 'Create and manage customer profiles that serve as the identity layer for invoices and payment links, with unique email enforcement per organization.'
 ---
@@ -22,7 +22,7 @@ Customers are the identity layer of NadaPay's merchant tooling. A customer recor
 
 ### Endpoint
 
-```
+```text
 POST /organization/customers
 ```
 
@@ -30,7 +30,7 @@ POST /organization/customers
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organization/customers \
+  --url https://core.nadapay.io/api/v1/organization/customers \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -95,7 +95,7 @@ Retrieve all customer profiles under your organization.
 
 ```bash
 curl --request GET \
-  --url $baseUrl/organization/customers \
+  --url https://core.nadapay.io/api/v1/organization/customers \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -109,7 +109,7 @@ Retrieve a single customer record by ID.
 
 ```bash
 curl --request GET \
-  --url $baseUrl/organization/customers/{id} \
+  --url https://core.nadapay.io/api/v1/organization/customers/{id} \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -123,7 +123,7 @@ Update one or more fields on an existing customer profile.
 
 ```bash
 curl --request PATCH \
-  --url $baseUrl/organization/customers/{id} \
+  --url https://core.nadapay.io/api/v1/organization/customers/{id} \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -142,7 +142,7 @@ Permanently delete a customer profile from your organization.
 
 ```bash
 curl --request DELETE \
-  --url $baseUrl/organization/customers/{id} \
+  --url https://core.nadapay.io/api/v1/organization/customers/{id} \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 

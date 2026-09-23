@@ -1,5 +1,5 @@
 ---
-title: 'Manage Child Organizations as a NadaPay Partner'
+title: 'Manage Child Organizations Under a NadaPay Partner Account'
 sidebarTitle: 'Child Organizations'
 description: 'Register and manage sub-businesses under your partner account, set per-child fee markups, and guide each child through its own KYB verification process.'
 ---
@@ -14,7 +14,7 @@ Child organizations are sub-businesses that operate under your NadaPay partner a
 
 ### Endpoint
 
-```
+```text
 POST /organizations/children
 ```
 
@@ -22,7 +22,7 @@ POST /organizations/children
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organizations/children \
+  --url https://core.nadapay.io/api/v1/organizations/children \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
@@ -112,7 +112,7 @@ Retrieve all sub-businesses registered under your partner account.
 
 ### Endpoint
 
-```
+```text
 GET /organizations/children
 ```
 
@@ -120,7 +120,7 @@ GET /organizations/children
 
 ```bash
 curl --request GET \
-  --url $baseUrl/organizations/children \
+  --url https://core.nadapay.io/api/v1/organizations/children \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -138,7 +138,7 @@ As a partner, you can apply a custom fee markup on top of NadaPay's base rates f
 
 ### Endpoint
 
-```
+```text
 POST /organizations/fees
 ```
 
@@ -146,7 +146,7 @@ POST /organizations/fees
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organizations/fees \
+  --url https://core.nadapay.io/api/v1/organizations/fees \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \

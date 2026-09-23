@@ -1,5 +1,5 @@
 ---
-title: 'KYC/KYB Verification Status in NadaPay'
+title: 'Check KYC/KYB Verification Status for NadaPay Accounts'
 sidebarTitle: 'Verification'
 description: 'Check your organization KYB verification status, handle each possible state correctly, and poll for approval before enabling live transaction flows.'
 ---
@@ -14,7 +14,7 @@ Before your organization — or any child organization you manage — can proces
 
 ### Endpoint
 
-```
+```text
 GET /organizations/verification/KYB
 ```
 
@@ -22,7 +22,7 @@ GET /organizations/verification/KYB
 
 ```bash
 curl --request GET \
-  --url $baseUrl/organizations/verification/KYB \
+  --url https://core.nadapay.io/api/v1/organizations/verification/KYB \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 

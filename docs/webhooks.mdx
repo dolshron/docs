@@ -1,5 +1,5 @@
 ---
-title: 'Receive Real-Time Events with NadaPay Webhooks'
+title: 'Receive Real-Time Payment Events with NadaPay Webhooks'
 sidebarTitle: 'Webhooks'
 description: 'Register webhook endpoints to receive HMAC-signed event notifications for transactions and verifications, with automatic retries and full delivery history.'
 ---
@@ -28,7 +28,7 @@ NadaPay webhooks deliver real-time event notifications to an HTTPS endpoint you 
 
 ### Endpoint
 
-```
+```text
 POST /organization/webhooks
 ```
 
@@ -36,7 +36,7 @@ POST /organization/webhooks
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organization/webhooks \
+  --url https://core.nadapay.io/api/v1/organization/webhooks \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{

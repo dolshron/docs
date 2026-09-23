@@ -1,5 +1,5 @@
 ---
-title: 'Send Cross-Border Payouts with NadaPay'
+title: 'Send Cross-Border Payouts with NadaPay Payments API'
 sidebarTitle: 'Overview'
 description: 'Learn how NadaPay payout API lets you send money to bank accounts, mobile wallets, and crypto addresses across supported corridors worldwide.'
 ---
@@ -25,29 +25,29 @@ Every payout — whether single or batch — follows the same ordered sequence. 
     Call `GET /api/v1/public/markets?channel=PAYOUT&isActive=true` to confirm the source→destination currency corridor is currently active. Corridor availability changes per provider, so always query this dynamically rather than assuming a static list.
   </Step>
   <Step title="Get Supported Networks">
-    Call `POST /transactions/networks` with the destination country code to retrieve the list of available payment rails and their network IDs for that country. Use the returned `code` values — do not hardcode them.
+    Call `POST /api/v1/transactions/networks` with the destination country code to retrieve the list of available payment rails and their network IDs for that country. Use the returned `code` values — do not hardcode them.
   </Step>
   <Step title="Resolve Bank Account">
-    For any bank-based rail, call `POST /transactions/resolve-bank-account` before creating the beneficiary. This confirms the account holder name and catches mismatched details before money moves.
+    For any bank-based rail, call `POST /api/v1/transactions/resolve-bank-account` before creating the beneficiary. This confirms the account holder name and catches mismatched details before money moves.
 
     <Warning>
       Never skip the resolve step for bank-based payouts. A misdirected transfer caused by an unresolved account is extremely difficult to reverse.
     </Warning>
   </Step>
   <Step title="Create Beneficiary">
-    Call `POST /beneficiaries` to register the recipient. A beneficiary is a reusable profile — create it once and reuse it across many transactions.
+    Call `POST /api/v1/beneficiaries` to register the recipient. A beneficiary is a reusable profile — create it once and reuse it across many transactions.
   </Step>
   <Step title="Add Beneficiary Account">
-    Call `POST /beneficiaries/{id}/accounts` to attach the specific payout destination (bank account, mobile number, or crypto address) to the beneficiary profile.
+    Call `POST /api/v1/beneficiaries/{id}/accounts` to attach the specific payout destination (bank account, mobile number, or crypto address) to the beneficiary profile.
   </Step>
   <Step title="Check Transaction Limits">
-    Call `POST /transactions/limits` with the corridor currency, country, and rail to retrieve the minimum, maximum, and daily limits. Validate your intended amount against these bounds before quoting.
+    Call `POST /api/v1/transactions/limits` with the corridor currency, country, and rail to retrieve the minimum, maximum, and daily limits. Validate your intended amount against these bounds before quoting.
   </Step>
   <Step title="Generate Quote">
-    Call `POST /transactions/quote` with the source account, destination beneficiary account, and amount. The response returns a locked `quoteId` with the finalized exchange rate and fees. Save this ID — you need it in the next step.
+    Call `POST /api/v1/transactions/quote` with the source account, destination beneficiary account, and amount. The response returns a locked `quoteId` with the finalized exchange rate and fees. Save this ID — you need it in the next step.
   </Step>
   <Step title="Execute Transaction">
-    Call `POST /transactions/execute` (or `POST /transactions/batch-execute` for multiple payouts) with the `quoteId` and matching source/destination values. The transaction is created immediately.
+    Call `POST /api/v1/transactions/execute` (or `POST /api/v1/transactions/batch-execute` for multiple payouts) with the `quoteId` and matching source/destination values. The transaction is created immediately.
   </Step>
   <Step title="Webhook confirms final state">
     Listen for the webhook event on your configured endpoint. The webhook delivers the authoritative final status — `COMPLETED`, `FAILED`, or `REVERSED` — for each transaction. Do not poll for status as a substitute for webhooks.
@@ -61,28 +61,28 @@ Every payout — whether single or batch — follows the same ordered sequence. 
 ## Flow summary
 
 ```
-GET  /api/v1/public/markets        ← confirm the corridor is active
+GET  /api/v1/public/markets               ← confirm the corridor is active
          ↓
-POST /transactions/networks        ← get rails for the destination country
+POST /api/v1/transactions/networks        ← get rails for the destination country
          ↓
-POST /transactions/resolve-bank-account  ← required for bank-based rails
+POST /api/v1/transactions/resolve-bank-account  ← required for bank-based rails
          ↓
-POST /beneficiaries                ← register the recipient profile
+POST /api/v1/beneficiaries                ← register the recipient profile
          ↓
-POST /beneficiaries/{id}/accounts  ← attach the payout destination
+POST /api/v1/beneficiaries/{id}/accounts  ← attach the payout destination
          ↓
-POST /transactions/limits          ← validate amount against corridor limits
+POST /api/v1/transactions/limits          ← validate amount against corridor limits
          ↓
-POST /transactions/quote           ← lock in the rate and get a quoteId
+POST /api/v1/transactions/quote           ← lock in the rate and get a quoteId
          ↓
-POST /transactions/execute         ← execute (or batch-execute for multiple)
+POST /api/v1/transactions/execute         ← execute (or batch-execute for multiple)
          ↓
 Webhook → final state confirmed
 ```
 
 ## Explore the payout guides
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Beneficiaries" icon="user-plus" href="/docs/beneficiaries">
     Register recipients and attach bank, mobile money, or crypto accounts for reuse across payouts.
   </Card>
@@ -90,6 +90,9 @@ Webhook → final state confirmed
     Lock in an exchange rate and receive a `quoteId` before committing funds.
   </Card>
   <Card title="Execute Transaction" icon="paper-plane" href="/docs/execute-transaction">
-    Submit a quoted transaction or batch of transactions to trigger the payout.
+    Submit a quoted payout transaction using a locked `quoteId`.
+  </Card>
+  <Card title="Batch Payouts" icon="layer-group" href="/docs/batch-payouts">
+    Dispatch multiple quoted payouts to different recipients in a single API call.
   </Card>
 </CardGroup>

@@ -1,5 +1,5 @@
 ---
-title: 'Generate a Payout Quote with NadaPay'
+title: 'Generate a Payout Quote and Lock the Exchange Rate'
 sidebarTitle: 'Generate Quote'
 description: 'Lock in an exchange rate and fees for a payout by generating a quote. The returned quoteId is required to execute the transaction.'
 ---
@@ -25,7 +25,7 @@ Use `POST /transactions/rate` to show a customer or operator an approximate conv
 
 ```bash
 curl --request POST \
-  --url $baseUrl/transactions/rate \
+  --url https://core.nadapay.io/api/v1/transactions/rate \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -41,7 +41,7 @@ Retrieve the minimum, maximum, and daily transaction limits for your corridor be
 
 ```bash
 curl --request POST \
-  --url $baseUrl/transactions/limits \
+  --url https://core.nadapay.io/api/v1/transactions/limits \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
@@ -78,7 +78,7 @@ Before calling `POST /transactions/quote`, confirm:
 
 ```bash
 curl --request POST \
-  --url $baseUrl/transactions/quote \
+  --url https://core.nadapay.io/api/v1/transactions/quote \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
@@ -94,7 +94,7 @@ curl --request POST \
       "beneficiaryAccountId": "ben-acc-uuid-456",
       "currency": "NGN",
       "type": "BANK",
-      "country": "Nigeria",
+      "country": "NG",
       "paymentMethod": "Bank Transfer"
     },
     "metadata": {

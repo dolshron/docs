@@ -22,7 +22,7 @@ Products are reusable billable items that you define once and attach to invoices
 
 ### Endpoint
 
-```
+```text
 POST /organization/products
 ```
 
@@ -30,7 +30,7 @@ POST /organization/products
 
 ```bash
 curl --request POST \
-  --url $baseUrl/organization/products \
+  --url https://core.nadapay.io/api/v1/organization/products \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -109,7 +109,7 @@ Retrieve all products in your organization.
 
 ```bash
 curl --request GET \
-  --url $baseUrl/organization/products \
+  --url https://core.nadapay.io/api/v1/organization/products \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -123,7 +123,7 @@ Retrieve a single product by ID.
 
 ```bash
 curl --request GET \
-  --url $baseUrl/organization/products/{id} \
+  --url https://core.nadapay.io/api/v1/organization/products/{id} \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -137,7 +137,7 @@ Update one or more fields on an existing product.
 
 ```bash
 curl --request PATCH \
-  --url $baseUrl/organization/products/{id} \
+  --url https://core.nadapay.io/api/v1/organization/products/{id} \
   --header 'x-api-key: YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -156,7 +156,7 @@ Remove a product from active use. Archiving preserves all historical invoice and
 
 ```bash
 curl --request DELETE \
-  --url $baseUrl/organization/products/{id} \
+  --url https://core.nadapay.io/api/v1/organization/products/{id} \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 

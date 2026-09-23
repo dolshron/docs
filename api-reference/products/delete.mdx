@@ -4,7 +4,7 @@ sidebarTitle: 'Delete'
 description: 'Archive a product by ID. Products with historical usage are archived rather than permanently deleted to preserve transaction records.'
 ---
 
-Calling this endpoint archives the product rather than permanently removing it from the database. This design choice is intentional — once a product has been referenced by an invoice or payment link, destroying it would corrupt historical records. After archiving, the product no longer appears as active in your catalogue but its data is preserved for reconciliation purposes. If you want to re-activate an archived product, use the [Update Product](/api-reference/products/update) endpoint to set `status: "ACTIVE"`.
+Calling this endpoint archives the product rather than permanently deleting it. Once a product has been referenced by an invoice or payment link, archiving preserves those historical records. After archiving, the product no longer appears as active in your catalogue but its data is retained for reconciliation purposes. If you want to re-activate an archived product, use the [Update Product](/api-reference/products/update) endpoint to set `status: "ACTIVE"`.
 
 ## Path parameters
 

@@ -1,5 +1,5 @@
 ---
-title: 'Check Currency Balances in Your NadaPay Wallets'
+title: 'Check a Currency Balance Before Sending a NadaPay Payout'
 sidebarTitle: 'Currency Balance'
 description: 'Retrieve the current balance for a specific currency in your NadaPay organization. Use this for pre-flight checks before generating a payout quote.'
 ---
@@ -10,7 +10,7 @@ Before generating a payout quote, you should confirm that the source wallet hold
 
 ```bash
 curl --request GET \
-  --url "$baseUrl/organizations/balance/USD" \
+  --url "https://core.nadapay.io/api/v1/organizations/balance/USD" \
   --header 'x-api-key: YOUR_API_KEY'
 ```
 
@@ -62,7 +62,7 @@ Use the following pattern to confirm sufficient funds before generating a quote:
 ```javascript
 // 1. Fetch the available balance for the source currency
 const balanceResponse = await fetch(
-  `${baseUrl}/organizations/balance/USD`,
+  'https://core.nadapay.io/api/v1/organizations/balance/USD',
   { headers: { 'x-api-key': process.env.NADAPAY_API_KEY } }
 );
 const { availableBalance } = await balanceResponse.json();

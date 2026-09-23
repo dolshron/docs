@@ -8,8 +8,8 @@ The rate endpoint returns the current indicative exchange rate for a given curre
 
 ## Endpoint
 
-```
-POST https://core.nadapay.io/api/v1/transactions/rate
+```http
+GET https://core.nadapay.io/api/v1/transactions/rate
 ```
 
 ## Headers
@@ -17,23 +17,18 @@ POST https://core.nadapay.io/api/v1/transactions/rate
 | Header | Required | Description |
 |--------|----------|-------------|
 | `x-api-key` | Yes | Your NadaPay API key. |
-| `Content-Type` | Yes | Must be `application/json`. |
 
 ## Request Parameters
 
-<ParamField body="currency" type="string" required>
+<ParamField query="currency" type="string" required>
   ISO 4217 currency code to get the exchange rate against USD. For example, `"KES"` for Kenyan Shilling or `"GHS"` for Ghanaian Cedi.
 </ParamField>
 
 ## Example Request
 
 ```bash
-curl -X POST https://core.nadapay.io/api/v1/transactions/rate \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "currency": "KES"
-  }'
+curl "https://core.nadapay.io/api/v1/transactions/rate?currency=KES" \
+  -H "x-api-key: YOUR_API_KEY"
 ```
 
 ## Response Fields

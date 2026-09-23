@@ -1,5 +1,5 @@
 ---
-title: 'Manage Beneficiaries for Recurring Payouts'
+title: 'Register and Manage Payout Beneficiaries in NadaPay'
 sidebarTitle: 'Beneficiaries'
 description: 'Register reusable payout recipients by creating a beneficiary profile and attaching a bank, mobile money, or crypto account destination.'
 ---
@@ -53,7 +53,7 @@ POST /beneficiaries/{id}/accounts        ← attach the payout destination
 
     ```bash
     curl --request POST \
-      --url $baseUrl/transactions/networks \
+      --url https://core.nadapay.io/api/v1/transactions/networks \
       --header 'x-api-key: YOUR_API_KEY' \
       --header 'Content-Type: application/json' \
       --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
@@ -104,7 +104,7 @@ POST /beneficiaries/{id}/accounts        ← attach the payout destination
 
     ```bash
     curl --request POST \
-      --url $baseUrl/transactions/resolve-bank-account \
+      --url https://core.nadapay.io/api/v1/transactions/resolve-bank-account \
       --header 'x-api-key: YOUR_API_KEY' \
       --header 'Content-Type: application/json' \
       --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
@@ -126,7 +126,7 @@ POST /beneficiaries/{id}/accounts        ← attach the payout destination
 
     ```bash
     curl --request POST \
-      --url $baseUrl/beneficiaries \
+      --url https://core.nadapay.io/api/v1/beneficiaries \
       --header 'x-api-key: YOUR_API_KEY' \
       --header 'Content-Type: application/json' \
       --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
@@ -205,7 +205,7 @@ POST /beneficiaries/{id}/accounts        ← attach the payout destination
 
     ```bash
     curl --request POST \
-      --url $baseUrl/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts \
+      --url https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts \
       --header 'x-api-key: YOUR_API_KEY' \
       --header 'Content-Type: application/json' \
       --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \

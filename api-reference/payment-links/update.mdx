@@ -8,7 +8,7 @@ Use this endpoint to make changes to an existing payment link without altering i
 
 ## Endpoint
 
-```
+```text
 PATCH https://core.nadapay.io/api/v1/organization/payment-links/:id
 ```
 
@@ -39,7 +39,7 @@ All body fields are optional. Include only the fields you want to change.
 </ParamField>
 
 <ParamField body="status" type="string">
-  Updated status for the link. Use this to activate or deactivate the link programmatically. Check the API for allowed status values.
+  Updated status for the link. Pass `"active"` to re-enable a deactivated link or `"inactive"` to temporarily stop it from accepting new payments without archiving it.
 </ParamField>
 
 <ParamField body="redirectUrl" type="string">
