@@ -1,0 +1,53 @@
+---
+title: 'GET /organizations/accounts/code/:code — Lookup by NadaPay Code'
+sidebarTitle: 'Lookup by Code'
+description: 'Resolve an organization account by its NadaPay Code. Use this to verify a destination before executing a wallet-to-wallet transfer.'
+---
+
+Every NadaPay account has a human-friendly NadaPay Code (e.g., `WAL-123`) that can be shared for receiving wallet-to-wallet transfers. Use this endpoint to resolve a code to its underlying account details before committing to a transfer — confirm you have the right destination account before executing.
+
+## Path parameters
+
+<ParamField path="nadapayCode" type="string" required>
+  The NadaPay Code to look up, e.g. `WAL-123`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organizations/nadapay-code/WAL-123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns the account information associated with the given NadaPay Code.
+
+<ResponseField name="id" type="string">
+  The account's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the organization or wallet holder.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency of the matched account.
+</ResponseField>
+
+<ResponseField name="nadapayCode" type="string">
+  The NadaPay Code that was looked up.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Account information found.",
+  "data": {
+    "id": "acc-uuid-789",
+    "name": "Acme Corp",
+    "currency": "USD",
+    "nadapayCode": "WAL-123"
+  }
+}
+```

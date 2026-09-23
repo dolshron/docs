@@ -1,0 +1,73 @@
+---
+title: 'GET /organizations/verification/:type — Check Verification Status'
+sidebarTitle: 'Verification'
+description: 'Check the KYB or KYC verification status for your organization. Only approved organizations can process live transactions on NadaPay.'
+---
+
+Before your organization can process live transactions, NadaPay requires identity verification. Businesses go through KYB (Know Your Business) and individuals go through KYC (Know Your Customer). Use this endpoint to check the current verification status and take the appropriate action in your onboarding flow. In sandbox mode, organizations are automatically approved — this endpoint is most relevant for your live environment integration.
+
+## Path parameters
+
+<ParamField path="type" type="string" required>
+  The verification type to check. Accepted values: `KYB` (for businesses), `KYC` (for individuals).
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organizations/verification/KYB \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns the current verification status and associated details.
+
+<ResponseField name="status" type="string">
+  The verification outcome. See the status table below.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  The verification type: `kyb` or `kyc`.
+</ResponseField>
+
+<ResponseField name="verified_at" type="string">
+  ISO 8601 timestamp of when verification was approved, if applicable.
+</ResponseField>
+
+<ResponseField name="details" type="object">
+  Additional context returned by the verification provider, e.g. `business_name`, `country`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "status": "approved",
+    "type": "kyb",
+    "verified_at": "2026-01-01T00:00:00Z",
+    "details": {
+      "business_name": "Acme Corp",
+      "country": "NG"
+    }
+  }
+}
+```
+
+## Status values
+
+| Status | Meaning | Can transact in production? |
+| --- | --- | --- |
+| `pending` | Not yet submitted | ❌ |
+| `review` | Submitted, under review | ❌ |
+| `approved` | Verification passed | ✅ |
+| `rejected` | Verification was rejected — review `details` and resubmit | ❌ |
+| `failed` | Verification attempt failed — review before retrying | ❌ |
+
+## Handling each status
+
+- **`pending`** — direct the organization to complete the onboarding submission before attempting live processing.
+- **`review`** — keep the organization in a non-transacting state and poll at a reasonable interval.
+- **`approved`** — the organization is cleared to transact in production.
+- **`rejected`** — review the `details` field, correct the issue, and resubmit through the approved channel.
+- **`failed`** — treat as blocking; review the response details before retrying or escalating.

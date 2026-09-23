@@ -1,0 +1,113 @@
+---
+title: 'POST /organization/cards — Issue a Virtual Card'
+sidebarTitle: 'Issue Card'
+description: 'Create a new corporate virtual card tied to a NadaPay wallet. The card starts inactive and requires a PIN before it can process transactions.'
+---
+
+Issuing a virtual card creates a new card record under your organization and links it to the NadaPay wallet you specify via `nadapayCode`. The card is created in `inactive` status — it cannot process any transactions until you call the [Set Card PIN](/api-reference/cards/set-pin) endpoint to set a PIN and activate it. You can optionally set a spending limit at issuance time; if you omit `limit`, the card defaults to the wallet's available balance as the effective ceiling.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/organization/cards
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Request Body
+
+<ParamField body="nadapayCode" type="string" required>
+  The NadaPay wallet code this card is tied to. The card will debit this wallet for all transactions. Example: `"NP-0001"`.
+</ParamField>
+
+<ParamField body="limit" type="number">
+  Optional spending limit for the card, expressed in cents. For example, pass `500000` to set a $5,000.00 limit. If omitted, the card's effective limit is the wallet's available balance.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/cards \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "nadapayCode": "NP-0001",
+    "limit": 500000
+  }'
+```
+
+## Response
+
+A `201 Created` response confirms the card was issued. The returned object contains safe display metadata — no PAN or CVV is included.
+
+<ResponseField name="success" type="boolean">
+  `true` when the card is issued successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `201` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Card issued successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The newly created card object.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      Unique card identifier. Use this `id` in all subsequent card operations.
+    </ResponseField>
+
+    <ResponseField name="last4" type="string">
+      The last four digits of the card number. Safe to display in your UI.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Always `"inactive"` at issuance. Changes to `"active"` after you set the PIN.
+    </ResponseField>
+
+    <ResponseField name="nadapayCode" type="string">
+      The wallet code this card is linked to, echoed back from your request.
+    </ResponseField>
+
+    <ResponseField name="environment" type="string">
+      `"live"` or `"sandbox"`, reflecting the environment of the issuing API key.
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of when the card was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Card issued successfully",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "last4": "4242",
+    "status": "inactive",
+    "nadapayCode": "NP-0001",
+    "environment": "live",
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  A newly issued card cannot process payments until its PIN is set. Call [Set Card PIN](/api-reference/cards/set-pin) immediately after issuance to move the card to `active` status.
+</Note>

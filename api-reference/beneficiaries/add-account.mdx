@@ -1,0 +1,238 @@
+---
+title: "POST /beneficiaries/:id/accounts — Add Beneficiary Account"
+sidebarTitle: "Add Account"
+description: "Attach a bank account, mobile money wallet, or crypto address to an existing beneficiary so it can be used as a payout destination."
+---
+
+Once you have created a beneficiary profile, attach one or more payout accounts to it using this endpoint. Each account represents a specific destination — a bank account number, mobile money phone number, or crypto wallet address. You can attach multiple accounts to a single beneficiary and choose which one to use at payout time. For bank-based payouts, resolve the bank account first to confirm the account holder name before attaching it.
+
+## Request
+
+**POST** `https://core.nadapay.io/api/v1/beneficiaries/{id}/accounts`
+
+### Bank account example (Nigeria)
+
+```bash
+curl --request POST \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "currency": "NGN",
+    "type": "EXTERNAL_BANK",
+    "details": {
+      "accountNumber": "0123456789",
+      "accountName": "Amara Diallo",
+      "networkId": "net_gtbank_ng",
+      "country": "NG",
+      "rail": "BANK_TRANSFER"
+    }
+  }'
+```
+
+### Mobile money example (MTN Ghana)
+
+```bash
+curl --request POST \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "currency": "GHS",
+    "type": "EXTERNAL_WALLET",
+    "details": {
+      "phoneNumber": "+233241234567",
+      "provider": "MTN",
+      "country": "GH",
+      "networkId": "net_mtn_gh"
+    }
+  }'
+```
+
+### Crypto example (USDC on Polygon)
+
+```bash
+curl --request POST \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "currency": "USDC",
+    "type": "EXTERNAL_WALLET",
+    "details": {
+      "chain": "POLYGON",
+      "address": "0xAbCd1234567890AbCd1234567890AbCd12345678"
+    }
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+<ParamField header="x-idempotency-key" type="string" required>
+  A unique UUID to prevent duplicate account creation on retries. Generate a fresh key for each new account you attach.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the beneficiary you want to attach an account to.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code for this payout account, e.g. `NGN`, `GHS`, `USDC`.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Destination type for this account. One of `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ParamField>
+
+<ParamField body="details" type="object" required>
+  Destination-specific fields. The required fields differ by rail type — see below.
+
+  <Expandable title="Bank account fields">
+    <ParamField body="details.accountNumber" type="string">
+      Recipient bank account number.
+    </ParamField>
+
+    <ParamField body="details.accountName" type="string">
+      Name on the bank account — should match the resolved account name.
+    </ParamField>
+
+    <ParamField body="details.networkId" type="string">
+      Banking network identifier from the Get Supported Networks endpoint.
+    </ParamField>
+
+    <ParamField body="details.country" type="string">
+      ISO 3166-1 alpha-2 destination country code, e.g. `NG`, `GH`, `KE`.
+    </ParamField>
+
+    <ParamField body="details.rail" type="string">
+      Payout rail, e.g. `BANK_TRANSFER`, `ACH`.
+    </ParamField>
+
+    <ParamField body="details.bankCode" type="string">
+      Bank code — include when required by the destination banking scheme.
+    </ParamField>
+
+    <ParamField body="details.iban" type="string">
+      IBAN for IBAN-based corridors.
+    </ParamField>
+
+    <ParamField body="details.swiftCode" type="string">
+      SWIFT/BIC code for international wire routing.
+    </ParamField>
+
+    <ParamField body="details.sortCode" type="string">
+      UK sort code for GBP bank transfers.
+    </ParamField>
+
+    <ParamField body="details.routingNumber" type="string">
+      US ACH routing number.
+    </ParamField>
+
+    <ParamField body="details.clabe" type="string">
+      18-digit CLABE for Mexican corridors.
+    </ParamField>
+
+    <ParamField body="details.pixKey" type="string">
+      PIX key for Brazilian corridors.
+    </ParamField>
+
+    <ParamField body="details.cpf" type="string">
+      Brazilian CPF — required when the corridor demands recipient tax ID.
+    </ParamField>
+  </Expandable>
+
+  <Expandable title="Mobile money fields">
+    <ParamField body="details.phoneNumber" type="string">
+      Recipient's mobile money number in international format.
+    </ParamField>
+
+    <ParamField body="details.provider" type="string">
+      Mobile money provider, e.g. `MTN`, `Airtel`, `M-Pesa`.
+    </ParamField>
+
+    <ParamField body="details.country" type="string">
+      ISO 3166-1 alpha-2 destination country code.
+    </ParamField>
+
+    <ParamField body="details.networkId" type="string">
+      Network identifier — include when the provider requires routing via a specific network.
+    </ParamField>
+  </Expandable>
+
+  <Expandable title="Crypto fields">
+    <ParamField body="details.chain" type="string">
+      Blockchain network, e.g. `ETHEREUM`, `POLYGON`, `TRON`, `SOLANA`.
+    </ParamField>
+
+    <ParamField body="details.address" type="string">
+      Recipient wallet address on the specified chain. Do not send `accountName`, `provider`, or `country` for crypto accounts.
+    </ParamField>
+  </Expandable>
+
+  <Expandable title="NadaPay internal fields">
+    <ParamField body="details.nadapayCode" type="string">
+      NadaPay wallet code of the recipient — format `WAL-xxx`. Use when `type` is `INTERNAL`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+A successful `201 Created` response confirms the account is linked to the beneficiary.
+
+```json
+{
+  "data": {
+    "id": "acc_01HXXXXXXXXXXXXXXXXXX",
+    "beneficiaryId": "ben_01HXXXXXXXXXXXXXXXXXX",
+    "currency": "NGN",
+    "type": "EXTERNAL_BANK",
+    "status": "active",
+    "details": {
+      "accountNumber": "0123456789",
+      "accountName": "Amara Diallo",
+      "country": "NG"
+    },
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+}
+```
+
+<ResponseField name="data.id" type="string">
+  Unique identifier for the newly linked payout account. Use this when updating or deleting the account.
+</ResponseField>
+
+<ResponseField name="data.beneficiaryId" type="string">
+  The ID of the beneficiary this account is attached to.
+</ResponseField>
+
+<ResponseField name="data.currency" type="string">
+  Currency this payout account is configured for.
+</ResponseField>
+
+<ResponseField name="data.type" type="string">
+  Destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Current status of the payout account.
+</ResponseField>
+
+<ResponseField name="data.details" type="object">
+  The destination details stored for this account.
+</ResponseField>
+
+<ResponseField name="data.created_at" type="string">
+  ISO 8601 timestamp when the account was linked.
+</ResponseField>

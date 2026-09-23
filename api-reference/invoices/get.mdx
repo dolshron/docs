@@ -1,0 +1,101 @@
+---
+title: 'GET /organization/invoices/:id — Get Invoice Details'
+sidebarTitle: 'Get'
+description: 'Fetch complete details for a single invoice by ID, including all line items, tax rate, discount settings, payment methods, and current status.'
+---
+
+Use this endpoint to retrieve the complete record for a specific invoice. This is useful for displaying invoice details in your application, confirming status before attempting an update, or gathering information for customer support. Pass the invoice `id` as a path parameter.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the invoice to retrieve, e.g. `inv_abc123`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organization/invoices/inv_abc123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns the full invoice object.
+
+<ResponseField name="id" type="string">
+  The invoice's unique identifier.
+</ResponseField>
+
+<ResponseField name="invoiceNumber" type="string">
+  The customer-facing invoice number.
+</ResponseField>
+
+<ResponseField name="customerId" type="string">
+  ID of the customer this invoice is addressed to.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Total invoice amount in the smallest currency unit.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  Invoice currency code.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current invoice status: `DRAFT`, `SENT`, `PAID`, `OVERDUE`, or `CANCELLED`.
+</ResponseField>
+
+<ResponseField name="items" type="array">
+  Array of line items, each with `description`, `quantity`, `unitPrice`, and `amount`.
+</ResponseField>
+
+<ResponseField name="taxRate" type="number">
+  Applied tax rate as a percentage, if set.
+</ResponseField>
+
+<ResponseField name="taxName" type="string">
+  Tax label as displayed on the invoice.
+</ResponseField>
+
+<ResponseField name="dueDate" type="string">
+  ISO 8601 payment due date.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Invoice details retrieved successfully",
+  "data": {
+    "id": "inv_abc123",
+    "invoiceNumber": "INV-001",
+    "customerId": "cus_abc123",
+    "total": 108250,
+    "currency": "USD",
+    "status": "SENT",
+    "items": [
+      {
+        "description": "Web Design Services",
+        "quantity": 2,
+        "unitPrice": 500,
+        "amount": 1000
+      }
+    ],
+    "taxRate": 8.25,
+    "taxName": "Sales Tax",
+    "dueDate": "2026-05-24T00:00:00.000Z",
+    "createdAt": "2026-04-24T00:00:00.000Z"
+  }
+}
+```
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `404` | No invoice found with the given `id` in your organization. |

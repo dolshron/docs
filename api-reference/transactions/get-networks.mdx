@@ -1,0 +1,114 @@
+---
+title: 'POST /transactions/networks — Get Provider Networks'
+sidebarTitle: 'Get Networks'
+description: 'Retrieve all supported payment networks and rails for a given country. Always fetch dynamically — never hardcode network codes in your application.'
+---
+
+The networks endpoint returns every payment network that NadaPay supports in a given country, including mobile money operators and local bank transfer rails. You will typically call this endpoint just before creating a beneficiary account so you can present the correct network options to your user and obtain the `code` value to store against the beneficiary. Network availability varies by corridor, so always fetch this list at runtime rather than caching or hardcoding it.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/networks
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID to prevent duplicate processing. |
+
+## Request Parameters
+
+<ParamField body="country" type="string" required>
+  ISO 3166-1 alpha-2 country code for the destination market. For example, `"GH"` for Ghana or `"NG"` for Nigeria.
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/networks \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "country": "GH"
+  }'
+```
+
+## Response Fields
+
+A `200` response returns a `data` object containing the country and its available networks.
+
+<ResponseField name="data" type="object">
+  Top-level wrapper object.
+
+  <Expandable title="data properties">
+    <ResponseField name="country" type="string">
+      The ISO 3166-1 alpha-2 country code you requested.
+    </ResponseField>
+
+    <ResponseField name="networks" type="array">
+      List of supported payment networks for this country.
+
+      <Expandable title="network object properties">
+        <ResponseField name="code" type="string">
+          The network identifier to use in the `details` object when creating a beneficiary account or building a transaction payload.
+        </ResponseField>
+
+        <ResponseField name="name" type="string">
+          Human-readable display name for the network.
+        </ResponseField>
+
+        <ResponseField name="currency" type="string">
+          ISO 4217 currency code associated with this network.
+        </ResponseField>
+
+        <ResponseField name="type" type="string">
+          Network type. One of `mobile_money` or `bank_account`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "data": {
+    "country": "GH",
+    "networks": [
+      {
+        "code": "mtn_momo",
+        "name": "MTN Mobile Money",
+        "currency": "GHS",
+        "type": "mobile_money"
+      },
+      {
+        "code": "vodafone_cash",
+        "name": "Vodafone Cash",
+        "currency": "GHS",
+        "type": "mobile_money"
+      },
+      {
+        "code": "bank_transfer",
+        "name": "Local Bank Transfer",
+        "currency": "GHS",
+        "type": "bank_account"
+      }
+    ]
+  }
+}
+```
+
+<Warning>
+  Network availability varies by corridor. Always fetch this endpoint dynamically and never hardcode network codes in your UI or application logic — codes can change as new providers are onboarded or existing ones are updated.
+</Warning>
+
+## What to Call Next
+
+- [Resolve Bank Account](/api-reference/transactions/resolve-bank-account) — verify a bank account holder name before attaching it to a beneficiary.
+- Add a beneficiary account using the `code` returned from this endpoint.

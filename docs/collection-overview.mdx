@@ -1,0 +1,92 @@
+---
+title: 'Collect Payments with NadaPay: Methods and When to Use Each'
+sidebarTitle: 'Overview'
+description: 'Compare NadaPay collection methods — Checkout, Payment Links, and Deposit Instructions — and choose the right approach for your payment flow.'
+---
+
+NadaPay supports three distinct ways to bring money into your platform. Before you build, decide whether your payer needs to complete a guided checkout experience or whether they will send funds directly using account details you provide. Choosing the right method from the start avoids rework and simplifies your integration.
+
+## Overview
+
+Collection covers all inbound money movement into NadaPay-powered flows. Use Checkout or a Payment Link when a customer needs to pay through a guided, hosted interface. Use Deposit Instructions when a payer — or your own operations team — needs the exact bank or wallet details to initiate a transfer directly.
+
+```
+Checkout / Payment Link  →  Customer pays through a hosted flow
+Deposit Instructions     →  Payer sends funds using provided account details
+```
+
+## Collection Methods
+
+| Method | Use it when | Guide |
+|---|---|---|
+| **Checkout** | You control a Pay button or embedded payment widget in your application. | [Accept Payments](/docs/accept-payments) |
+| **Payment Links** | You want to share a hosted payment URL outside your app — via email, SMS, or social. | [Payment Links](/docs/payment-links) |
+| **Deposit Instructions** | You need bank or wallet funding details for an account transfer initiated by a payer. | [Deposit Instructions](/docs/deposit-instructions) |
+
+### Checkout
+
+Checkout is the embedded JS SDK integration. Your backend creates a session and your frontend opens the NadaPay widget directly inside your application. Checkout is best when:
+
+- You have a product page, cart, or booking flow with a Pay button.
+- You want the payment experience to feel native to your application.
+- You need to verify the payment status programmatically before fulfilling an order.
+
+### Payment Links
+
+Payment Links are hosted URLs that NadaPay generates for you. Share the URL with a payer and they complete payment through a NadaPay-hosted page — no frontend widget integration required. Payment Links are best when:
+
+- You are invoicing clients over email and do not need a fully embedded flow.
+- You want to send a one-time or recurring payment request without building a frontend.
+- You need a shareable link that works across any device or channel.
+
+### Deposit Instructions
+
+Deposit Instructions return the exact bank account numbers, routing codes, or wallet addresses a payer needs to initiate a transfer on their own. NadaPay matches the inbound transfer to the correct wallet using a unique reference code. Deposit instructions are best when:
+
+- A business client or operations team is wiring funds into your platform.
+- The payer is initiating the transfer from their own banking interface.
+- You are funding your NadaPay account from an external source.
+
+## Comparison
+
+| | Checkout | Payment Links | Deposit Instructions |
+|---|---|---|---|
+| Payer experience | Embedded widget in your app | Hosted NadaPay page | Payer initiates from their bank |
+| Frontend work required | Yes (JS SDK) | No | No |
+| Backend work required | Yes (session creation + verification) | No (optional share endpoint) | Yes (POST to get instructions) |
+| Best for | Product / e-commerce flows | Email invoicing, social sharing | B2B transfers, account funding |
+| Reference matching | Automatic via session | Automatic via link | Payer must include the reference |
+
+## What Success Looks Like
+
+- You know which method fits your payment scenario before you start building.
+- You understand that Checkout requires backend session creation and verification.
+- You understand that Deposit Instructions require sharing the exact `reference` with the funding party.
+
+## Troubleshooting
+
+<Accordion title="I need a customer-facing payment flow">
+  Use Checkout through the [Accept Payments](/docs/accept-payments) guide. Create the session on your backend when the customer clicks Pay, then open the widget on the frontend with the returned reference.
+</Accordion>
+
+<Accordion title="I need funding instructions for an account transfer">
+  Use [Deposit Instructions](/docs/deposit-instructions). Call the POST endpoint to retrieve the instructions, then share the full instruction set — including the exact `reference` — with whoever is initiating the inbound transfer.
+</Accordion>
+
+<Accordion title="I want to send a payment URL without building a checkout widget">
+  Use [Payment Links](/docs/payment-links). Create the link via the API, then share the returned `url` with your customer directly.
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Accept Payments" icon="code" href="/docs/accept-payments">
+    Build a Checkout-based embedded payment flow.
+  </Card>
+  <Card title="Payment Links" icon="link" href="/docs/payment-links">
+    Create and share hosted payment URLs.
+  </Card>
+  <Card title="Deposit Instructions" icon="building-columns" href="/docs/deposit-instructions">
+    Retrieve inbound funding details for bank or wallet transfers.
+  </Card>
+</CardGroup>

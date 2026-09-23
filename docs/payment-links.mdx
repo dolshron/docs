@@ -1,0 +1,134 @@
+---
+title: 'Create and Share Hosted Payment Links with NadaPay'
+sidebarTitle: 'Payment Links'
+description: 'Create hosted NadaPay payment URLs, share them with customers over any channel, and track payments without building a custom checkout frontend.'
+---
+
+Payment Links let you generate a hosted payment page without writing any frontend code. Create a link through the API, share the returned URL with your customer via email, SMS, or any other channel, and NadaPay handles the checkout experience end-to-end. This guide covers creating a link, all available fields, and best practices for managing links over time.
+
+## Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/organization/payment-links` | Create a payment link |
+| `GET` | `/organization/payment-links` | List payment links |
+| `GET` | `/organization/payment-links/:id` | Get payment link details |
+| `PATCH` | `/organization/payment-links/:id` | Update a payment link |
+| `DELETE` | `/organization/payment-links/:id` | Archive a payment link |
+| `POST` | `/organization/payment-links/:id/share` | Share a link via email |
+| `GET` | `/organization/payment-links/shares/history` | View share history |
+
+## Create a Payment Link
+
+Send a `POST` request to create a new payment link. At minimum, provide a `name`, `checkoutType`, `currency`, `isVariableAmount`, and `settlementAccountId`.
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/payment-links \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Consultation Fee",
+    "checkoutType": "CUSTOM",
+    "amount": 5000,
+    "currency": "USD",
+    "isVariableAmount": false,
+    "settlementAccountId": "acct_01hw3x7k2r4p5q6m8n9v",
+    "collectAddress": false,
+    "collectPhoneNumber": false,
+    "redirectUrl": "https://yoursite.com/thank-you",
+    "successMessage": "Thanks for your payment!"
+  }'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Payment link created successfully",
+  "data": {
+    "id": "pl_abc123",
+    "slug": "consultation-fee",
+    "url": "https://pay.nadapay.io/consultation-fee",
+    "amount": 5000,
+    "currency": "USD",
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+The `url` field is the shareable link — hand this directly to your customer.
+
+## Field Reference
+
+<ParamField body="name" type="string" required>
+  Internal and display name for the payment link. Shown to the customer on the hosted page.
+</ParamField>
+
+<ParamField body="checkoutType" type="string" required>
+  Either `PRODUCT` or `CUSTOM`. Use `PRODUCT` to bill against a catalog item; use `CUSTOM` for a free-form amount.
+</ParamField>
+
+<ParamField body="productId" type="string">
+  Required when `checkoutType` is `PRODUCT`. The ID of the product to bill against.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Fixed payment amount in whole currency units (e.g. `5000` for $5,000 USD). Leave empty when `isVariableAmount` is `true`.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code. For example, `USD` or `NGN`.
+</ParamField>
+
+<ParamField body="isVariableAmount" type="boolean" required>
+  When `true`, the customer enters their own amount on the hosted page. When `false`, the `amount` field is used as the fixed charge.
+</ParamField>
+
+<ParamField body="settlementAccountId" type="string" required>
+  The ID of the NadaPay wallet where funds settle after a successful payment.
+</ParamField>
+
+<ParamField body="collectAddress" type="boolean">
+  When `true`, the hosted page prompts the customer for a shipping or billing address.
+</ParamField>
+
+<ParamField body="collectPhoneNumber" type="boolean">
+  When `true`, the hosted page prompts the customer for a phone number.
+</ParamField>
+
+<ParamField body="customFieldLabel" type="string">
+  Adds a free-text input field to the hosted page. Use this for customer-specific references such as "Invoice Number" or "Policy ID".
+</ParamField>
+
+<ParamField body="redirectUrl" type="string">
+  URL where NadaPay redirects the customer after a successful payment.
+</ParamField>
+
+<ParamField body="successMessage" type="string">
+  Message displayed on the NadaPay success screen after payment is confirmed.
+</ParamField>
+
+<ParamField body="expiresAt" type="string">
+  ISO 8601 timestamp after which the link stops accepting payments.
+</ParamField>
+
+## Best Practices
+
+<Tip>
+  Keep the link stable once shared. Avoid recreating links for the same purpose — reuse the existing link ID and update it via `PATCH` if details change.
+</Tip>
+
+- Use the `share` endpoint and the share history endpoint for audit trails and customer-support visibility into who received a link and when.
+- Archive a link using the `DELETE` endpoint when it is no longer needed. Archived links stop accepting payments but preserve all historical transaction data.
+- Set `expiresAt` on time-sensitive links such as event tickets or limited-time offers.
+- Use `customFieldLabel` to capture customer-specific references without building a custom form.
+
+## Next Steps
+
+- Share the link via email using the `POST /organization/payment-links/:id/share` endpoint.
+- Track completed payments through your [webhook handler](/docs/webhooks).
+- Use [Invoices](/docs/invoices) when you need itemized billing with line items and tax support.

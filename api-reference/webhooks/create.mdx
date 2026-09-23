@@ -1,0 +1,89 @@
+---
+title: 'POST /organization/webhooks — Register a Webhook Endpoint'
+sidebarTitle: 'Create'
+description: 'Register a URL to receive real-time event notifications. The environment (test or live) is determined by the API key you use to authenticate.'
+---
+
+Webhooks let NadaPay push real-time event notifications to your server instead of you polling for updates. When you register an endpoint, NadaPay returns a signing secret — use it to verify the `X-Nadapay-Signature` header on every incoming delivery. The environment your webhook operates in is determined automatically by your API key: `np_test_...` keys create sandbox webhooks, and `np_live_...` keys create live webhooks.
+
+## Request body
+
+<ParamField body="url" type="string" required>
+  The HTTPS URL NadaPay will POST event payloads to. Must be publicly reachable.
+</ParamField>
+
+<ParamField body="events" type="array">
+  The list of event types you want to subscribe to. If omitted, NadaPay sends all supported events. Supported events:
+  - `TRANSACTION.CREATED`
+  - `TRANSACTION.AWAITING_FUNDS`
+  - `TRANSACTION.PROCESSING`
+  - `TRANSACTION.EXECUTING`
+  - `TRANSACTION.COMPLETED`
+  - `TRANSACTION.FAILED`
+  - `TRANSACTION.QUEUED`
+  - `VERIFICATION.COMPLETED`
+</ParamField>
+
+<ParamField body="status" type="string" default="ACTIVE">
+  The initial status of the webhook. Accepted values: `ACTIVE`, `INACTIVE`.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/webhooks \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "url": "https://yourapp.com/webhooks/nadapay",
+    "events": ["TRANSACTION.COMPLETED", "TRANSACTION.FAILED"],
+    "status": "ACTIVE"
+  }'
+```
+
+## Response
+
+A `201` response returns the registered webhook and its signing secret.
+
+<ResponseField name="id" type="string">
+  Unique identifier for the webhook endpoint.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  The URL NadaPay will deliver events to.
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  The event types this webhook is subscribed to.
+</ResponseField>
+
+<ResponseField name="secret" type="string">
+  The HMAC-SHA256 signing secret. Store this securely — it is only returned once at creation. Use it to verify incoming `X-Nadapay-Signature` headers.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current webhook status: `ACTIVE` or `INACTIVE`.
+</ResponseField>
+
+<ResponseField name="environment" type="string">
+  The environment this webhook belongs to: `TEST` or `LIVE`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Webhook registered successfully.",
+  "data": {
+    "id": "wh_abc123",
+    "url": "https://yourapp.com/webhooks/nadapay",
+    "events": ["TRANSACTION.COMPLETED", "TRANSACTION.FAILED"],
+    "secret": "whsec_a1b2c3d4e5f6...",
+    "status": "ACTIVE",
+    "environment": "LIVE"
+  }
+}
+```
+
+<Warning>
+  The `secret` is returned only once at registration. Store it in a secure secrets manager immediately — you cannot retrieve it again.
+</Warning>

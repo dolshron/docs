@@ -1,0 +1,124 @@
+---
+title: 'POST /organization/products — Create a Product'
+sidebarTitle: 'Create'
+description: 'Create a reusable billable product or service. Products can be ONE_TIME or RECURRING, and attach to invoices and payment links by ID.'
+---
+
+Products act as your catalogue of billable items — you define them once and reference them by ID in invoices and payment links. A product can represent a one-time service, a subscription plan, or any item you regularly charge for. For recurring products, specify a `billingPeriod` such as `monthly` or `annual`. Prices are provided in whole units (e.g., `120` for $120) and NadaPay converts them to micro-units internally.
+
+## Request body
+
+<ParamField body="name" type="string" required>
+  The product name, e.g. `Premium Plan` or `Web Design Package`.
+</ParamField>
+
+<ParamField body="type" type="string" required default="ONE_TIME">
+  The product billing type. Accepted values: `ONE_TIME`, `RECURRING`.
+</ParamField>
+
+<ParamField body="price" type="number" required>
+  The product price in whole currency units, e.g. `120` for $120. NadaPay converts this to micro-units internally.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  The currency code for this product's price, e.g. `USD`, `NGN`.
+</ParamField>
+
+<ParamField body="billingPeriod" type="string">
+  Required when `type` is `RECURRING`. The billing cycle, e.g. `monthly`, `annual`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  A description of the product shown to customers.
+</ParamField>
+
+<ParamField body="sku" type="string">
+  Your internal stock-keeping unit or product code.
+</ParamField>
+
+<ParamField body="image" type="string">
+  URL of a product image to display on payment pages.
+</ParamField>
+
+<ParamField body="status" type="string" default="ACTIVE">
+  The initial product status. Accepted values: `ACTIVE`, `DRAFT`, `ARCHIVED`. Defaults to `ACTIVE`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs to store with this product record.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/products \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Premium Plan",
+    "type": "RECURRING",
+    "price": 120,
+    "currency": "USD",
+    "billingPeriod": "monthly",
+    "description": "Access to all premium features with priority support.",
+    "sku": "PLAN-PREMIUM-001",
+    "status": "ACTIVE"
+  }'
+```
+
+## Response
+
+A `201` response returns the newly created product object.
+
+<ResponseField name="id" type="string">
+  Unique identifier for the product, e.g. `prod_01hw3x7k2r4p5q6m8n9v`.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The product name.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  The product description.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The product currency.
+</ResponseField>
+
+<ResponseField name="price" type="number">
+  The product price in micro-units.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Whether the product is currently active.
+</ResponseField>
+
+<ResponseField name="environment" type="string">
+  The environment this product belongs to: `live` or `test`.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Product created successfully",
+  "data": {
+    "id": "prod_01hw3x7k2r4p5q6m8n9v",
+    "name": "Premium Plan",
+    "description": "Access to all premium features with priority support.",
+    "currency": "USD",
+    "price": 12000000,
+    "isActive": true,
+    "environment": "live",
+    "createdAt": "2026-04-24T10:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  Archive products rather than deleting them once they have been referenced by invoices or payment links — this preserves historical transaction records.
+</Note>

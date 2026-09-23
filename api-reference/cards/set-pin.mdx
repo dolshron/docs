@@ -1,0 +1,94 @@
+---
+title: 'POST /organization/cards/:id/pin — Set Card PIN'
+sidebarTitle: 'Set PIN'
+description: 'Set a 4-digit numeric PIN on a virtual card to activate it. Until the PIN is set, the card remains inactive and cannot process any transactions.'
+---
+
+Setting a card's PIN is the required step that activates a virtual card and allows it to process transactions. Until you call this endpoint, a newly issued card remains in `inactive` status and will be declined at any point of sale. The PIN must be a 4-digit numeric string. You should collect it from the cardholder through a tightly scoped input on your frontend and send it directly to this endpoint — do not store the PIN, log it, or pass it through any intermediate service that doesn't strictly need it.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/organization/cards/:id/pin
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the card you want to activate. This is the `id` returned when you [issued the card](/api-reference/cards/issue).
+</ParamField>
+
+## Request Body
+
+<ParamField body="pin" type="string" required>
+  The 4-digit numeric PIN to set for this card. Must contain exactly four numeric characters (e.g. `"1234"`). Do not pass a non-numeric or shorter/longer string.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/cards/card_01hw3x7k2r4p5q6m8n9v/pin \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "pin": "1234"
+  }'
+```
+
+## Response
+
+A `200 OK` response confirms the PIN was set and the card is now active. The response body echoes the card `id` and the updated `status`.
+
+<ResponseField name="success" type="boolean">
+  `true` when the PIN is set and the card is activated successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Card PIN set and activated"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The updated card summary.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      The unique identifier of the card that was activated.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      The card's new status — always `"active"` after a successful PIN set.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Card PIN set and activated",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "status": "active"
+  }
+}
+```
+
+<Note>
+  Collect the PIN through a minimal, isolated input on your frontend and transmit it straight to this endpoint. Never store the PIN in your database, include it in application logs, or pass it through any intermediate service beyond what is required to reach the NadaPay API.
+</Note>

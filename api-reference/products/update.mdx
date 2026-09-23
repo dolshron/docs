@@ -1,0 +1,100 @@
+---
+title: 'PATCH /organization/products/:id — Update a Product'
+sidebarTitle: 'Update'
+description: 'Update one or more fields on an existing product record. Send only the fields you want to change — any fields you omit will remain unchanged.'
+---
+
+Use this endpoint to change a product's name, price, description, status, or any other mutable field. This is a partial update — you only need to include the fields you want to modify. For example, you can update a product's status to `ARCHIVED` without changing any other properties. Keep product identifiers stable once they have been referenced by invoices or payment links to maintain data integrity.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the product to update.
+</ParamField>
+
+## Request body
+
+<ParamField body="name" type="string">
+  Updated product name.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated product description.
+</ParamField>
+
+<ParamField body="image" type="string">
+  Updated URL for the product image.
+</ParamField>
+
+<ParamField body="type" type="string">
+  Updated billing type: `ONE_TIME` or `RECURRING`.
+</ParamField>
+
+<ParamField body="price" type="number">
+  Updated price in whole currency units.
+</ParamField>
+
+<ParamField body="currency" type="string">
+  Updated currency code.
+</ParamField>
+
+<ParamField body="billingPeriod" type="string">
+  Updated billing cycle for recurring products.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Updated product status: `ACTIVE`, `DRAFT`, or `ARCHIVED`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Updated metadata object. Replaces the existing metadata entirely.
+</ParamField>
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organization/products/prod_01hw3x7k2r4p5q6m8n9v \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "price": 150,
+    "description": "Access to all premium features with priority support — now with AI tools."
+  }'
+```
+
+## Response
+
+A `200` response returns the updated product object.
+
+<ResponseField name="id" type="string">
+  The product's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The product's current name.
+</ResponseField>
+
+<ResponseField name="price" type="number">
+  The product's updated price in micro-units.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The product's current status.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Product updated successfully",
+  "data": {
+    "id": "prod_01hw3x7k2r4p5q6m8n9v",
+    "name": "Premium Plan",
+    "description": "Access to all premium features with priority support — now with AI tools.",
+    "currency": "USD",
+    "price": 15000000,
+    "status": "ACTIVE",
+    "isActive": true,
+    "updatedAt": "2026-04-25T10:00:00.000Z"
+  }
+}
+```

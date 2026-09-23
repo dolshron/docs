@@ -1,0 +1,163 @@
+---
+title: "POST /beneficiaries/batch — Batch Create Beneficiaries"
+sidebarTitle: "Batch Create"
+description: "Create multiple beneficiary profiles in a single request. Requires an idempotency key to ensure the batch is only processed once on retries."
+---
+
+Use this endpoint when you need to register multiple recipient profiles at once — for example, when onboarding a new cohort of payroll recipients or importing a list of vendors. You send a single request with an array of beneficiary objects following the same schema as the single-create endpoint, and NadaPay processes them as a batch. You must include an idempotency key; if you retry the request with the same key, NadaPay will return the original batch result rather than creating duplicates.
+
+## Request
+
+**POST** `https://core.nadapay.io/api/v1/beneficiaries/batch`
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/beneficiaries/batch \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "beneficiaries": [
+      {
+        "name": "Amara Diallo",
+        "email": "amara.diallo@example.com",
+        "phone": "+2348012345678",
+        "currency": "NGN",
+        "type": "EXTERNAL_BANK",
+        "details": {
+          "accountNumber": "0123456789",
+          "accountName": "Amara Diallo",
+          "networkId": "net_gtbank_ng",
+          "country": "NG",
+          "rail": "BANK_TRANSFER"
+        }
+      },
+      {
+        "name": "Kofi Mensah",
+        "phone": "+233241234567",
+        "currency": "GHS",
+        "type": "EXTERNAL_WALLET",
+        "details": {
+          "phoneNumber": "+233241234567",
+          "provider": "MTN",
+          "country": "GH",
+          "networkId": "net_mtn_gh"
+        }
+      },
+      {
+        "name": "Crypto Recipient",
+        "currency": "USDC",
+        "type": "EXTERNAL_WALLET",
+        "details": {
+          "chain": "POLYGON",
+          "address": "0xAbCd1234567890AbCd1234567890AbCd12345678"
+        }
+      }
+    ]
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+<ParamField header="x-idempotency-key" type="string" required>
+  A unique UUID for this batch request. NadaPay uses this to deduplicate retries — if you retry with the same key, the original response is returned without creating duplicates.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="beneficiaries" type="array" required>
+  An array of beneficiary objects to create. Each object follows the same schema as the single Create Beneficiary request. The array must contain at least one item.
+
+  <Expandable title="Each beneficiary object">
+    <ParamField body="beneficiaries[].name" type="string" required>
+      Full name of the beneficiary.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].email" type="string">
+      Beneficiary email address.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].phone" type="string">
+      Beneficiary phone number in international format.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].currency" type="string" required>
+      ISO 4217 currency code for the payout destination.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].type" type="string" required>
+      Destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].details" type="object" required>
+      Payout destination details. See the Create Beneficiary endpoint for full field documentation by rail type.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+A successful `201 Created` response returns an array of the newly created beneficiary objects, in the same order as your input array.
+
+```json
+{
+  "data": [
+    {
+      "id": "ben_01HXXXXXXXXXXXXXXXXXX",
+      "name": "Amara Diallo",
+      "type": "EXTERNAL_BANK",
+      "status": "active",
+      "currency": "NGN",
+      "created_at": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "ben_01HYYYYYYYYYYYYYYYYYY",
+      "name": "Kofi Mensah",
+      "type": "EXTERNAL_WALLET",
+      "status": "active",
+      "currency": "GHS",
+      "created_at": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "ben_01HZZZZZZZZZZZZZZZZZ",
+      "name": "Crypto Recipient",
+      "type": "EXTERNAL_WALLET",
+      "status": "active",
+      "currency": "USDC",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+<ResponseField name="data" type="array">
+  Array of created beneficiary objects, returned in the same order as the input array.
+</ResponseField>
+
+<ResponseField name="data[].id" type="string">
+  Unique identifier assigned to the new beneficiary. Save each ID to reference the beneficiary in subsequent calls.
+</ResponseField>
+
+<ResponseField name="data[].name" type="string">
+  Display name of the created beneficiary.
+</ResponseField>
+
+<ResponseField name="data[].type" type="string">
+  Destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ResponseField>
+
+<ResponseField name="data[].status" type="string">
+  Initial status of the beneficiary, typically `active`.
+</ResponseField>
+
+<ResponseField name="data[].currency" type="string">
+  Payout currency for the beneficiary.
+</ResponseField>
+
+<ResponseField name="data[].created_at" type="string">
+  ISO 8601 timestamp when the beneficiary was created.
+</ResponseField>

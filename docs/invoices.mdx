@@ -1,0 +1,165 @@
+---
+title: 'Create, Send, and Track Customer Invoices in NadaPay'
+sidebarTitle: 'Invoices'
+description: 'Create draft invoices with line items and tax, send them to customers, and track payment through the full invoice lifecycle from DRAFT to PAID.'
+---
+
+NadaPay Invoices give you a structured billing flow for professional, itemized receivables. You create an invoice as a draft, review and update it, then send it to your customer when it is ready. Your customer receives a link to a hosted payment page and completes payment there. This guide covers creating an invoice, all available fields, the invoice lifecycle, and best practices for managing invoices at scale.
+
+## Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/organization/invoices` | Create an invoice |
+| `GET` | `/organization/invoices` | List invoices |
+| `GET` | `/organization/invoices/:id` | Get invoice details |
+| `PATCH` | `/organization/invoices/:id` | Update a draft invoice |
+| `POST` | `/organization/invoices/:id/send` | Send an invoice to the customer |
+| `DELETE` | `/organization/invoices/:id` | Delete a draft invoice |
+| `GET` | `/public/invoices/:number` | Resolve invoice details publicly |
+| `POST` | `/public/invoices/:number/session` | Create a checkout session for the invoice |
+
+## Create an Invoice
+
+Send a `POST` request to create a new invoice. The invoice starts in `DRAFT` status. Set `sendNow: true` if you want to transition it to `SENT` and email the customer immediately.
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/invoices \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "customerId": "cus_abc123",
+    "number": "INV-001",
+    "issueDate": "2026-04-24T00:00:00.000Z",
+    "dueDate": "2026-05-24T00:00:00.000Z",
+    "currency": "USD",
+    "items": [
+      { "description": "Web Design", "quantity": 2, "unitPrice": 500 }
+    ],
+    "taxRate": 8.25,
+    "taxName": "Sales Tax",
+    "settlementAccountId": "acct_01hw3x7k2r4p5q6m8n9v",
+    "paymentMethods": ["bank_transfer", "crypto"],
+    "sendNow": false
+  }'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Invoice created successfully",
+  "data": {
+    "id": "inv_abc123",
+    "invoiceNumber": "INV-001",
+    "customerId": "cus_abc123",
+    "total": 108250,
+    "currency": "USD",
+    "status": "DRAFT",
+    "dueDate": "2026-05-24T00:00:00Z",
+    "createdAt": "2026-04-24T00:00:00Z"
+  }
+}
+```
+
+## Field Reference
+
+<ParamField body="customerId" type="string" required>
+  Must reference an existing customer record. Create the customer first using the Customers API before creating an invoice.
+</ParamField>
+
+<ParamField body="number" type="string" required>
+  Your invoice number. Used as the customer-facing reference and in the public invoice URL.
+</ParamField>
+
+<ParamField body="issueDate" type="string" required>
+  ISO 8601 timestamp representing when the invoice was issued.
+</ParamField>
+
+<ParamField body="dueDate" type="string" required>
+  ISO 8601 timestamp representing the payment due date.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code. For example, `USD` or `NGN`.
+</ParamField>
+
+<ParamField body="items" type="array" required>
+  Array of line items. Each item must include:
+  - `description` (string) — what the item is
+  - `quantity` (number) — how many units
+  - `unitPrice` (number) — price per unit in whole currency units
+</ParamField>
+
+<ParamField body="settlementAccountId" type="string" required>
+  The ID of the NadaPay wallet where the payment settles.
+</ParamField>
+
+<ParamField body="paymentMethods" type="array" required>
+  Array of accepted payment methods. Any combination of `bank_transfer`, `crypto`, `card`, or `nadapay_wallet`.
+</ParamField>
+
+<ParamField body="taxRate" type="number">
+  Tax rate as a percentage. For example, `8.25` for 8.25% sales tax.
+</ParamField>
+
+<ParamField body="taxName" type="string">
+  Display name for the tax line, for example `Sales Tax` or `VAT`.
+</ParamField>
+
+<ParamField body="discountValue" type="number">
+  Discount amount to apply to the subtotal.
+</ParamField>
+
+<ParamField body="discountType" type="string">
+  Either `PERCENTAGE` for a percentage-based discount or a fixed amount type.
+</ParamField>
+
+<ParamField body="allowPartialPayment" type="boolean">
+  When `true`, the customer can pay less than the full invoice amount.
+</ParamField>
+
+<ParamField body="sendNow" type="boolean">
+  When `true`, the invoice transitions to `SENT` immediately and NadaPay emails the customer. When `false`, the invoice stays in `DRAFT` until you call the send endpoint.
+</ParamField>
+
+<ParamField body="scheduledAt" type="string">
+  ISO 8601 timestamp to schedule the send for a future time instead of sending immediately.
+</ParamField>
+
+## Invoice Lifecycle
+
+Invoices move through a defined set of statuses. Understanding the lifecycle helps you know which operations are available at each stage.
+
+```
+DRAFT → SENT → PAID
+  ↓
+DELETED (only from DRAFT)
+```
+
+| Status | Description | Allowed Actions |
+|---|---|---|
+| `DRAFT` | Invoice created but not yet sent. | Update, Delete, Send |
+| `SENT` | Invoice emailed to the customer. | View only |
+| `PAID` | Customer completed payment. | View only |
+
+<Warning>
+  Only `DRAFT` invoices can be updated or deleted. Once an invoice transitions to `SENT` or `PAID`, its line items, amounts, and fields are locked.
+</Warning>
+
+## Best Practices
+
+- Create the invoice first as a `DRAFT` so you can review it before sending. Use `PATCH` to correct any errors before the customer sees the invoice.
+- Use the invoice `number` field as your customer-facing reference — it appears in the public URL and on the hosted payment page.
+- Set `sendNow: false` during development and `sendNow: true` (or use the send endpoint) when you are ready to deliver to a real customer.
+- Only create a checkout session via `POST /public/invoices/:number/session` when the customer is actively on the payment page and ready to pay — sessions have a limited lifespan.
+
+## Next Steps
+
+- Send the invoice via `POST /organization/invoices/:id/send` when it is ready.
+- Your customer opens `/public/invoices/:number` and creates a session to complete payment.
+- Track payment status changes through your [webhook handler](/docs/webhooks).
+- Use [Products](/docs/products) to define reusable catalog items that feed into invoices and payment links.

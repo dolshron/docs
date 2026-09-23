@@ -1,0 +1,48 @@
+---
+title: 'GET /organizations/accounts/balance — Get Currency Balance'
+sidebarTitle: 'Balance'
+description: 'Fetch the current balance for a specific currency. Use this for quick pre-transaction checks when you already know which currency you need.'
+---
+
+Use this endpoint when you need the balance for a single, known currency — for example, to check whether you have sufficient funds before generating a quote or executing a transaction. If you need an overview of all your currency wallets at once, use the [List Accounts](/api-reference/organizations/list-accounts) endpoint instead.
+
+## Path parameters
+
+<ParamField path="currency" type="string" required>
+  The currency code to query, e.g. `USD`, `NGN`, `USDC`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organizations/balance/USD \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns the balance details for the requested currency.
+
+<ResponseField name="currency" type="string">
+  The queried currency code.
+</ResponseField>
+
+<ResponseField name="balance" type="number">
+  The current available balance in micro-units.
+</ResponseField>
+
+<ResponseField name="ledgerBalance" type="number">
+  The total ledger balance (may differ from available balance if funds are in transit).
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Balance details for the specified currency.",
+  "data": {
+    "currency": "USD",
+    "balance": 500000000,
+    "ledgerBalance": 520000000
+  }
+}
+```

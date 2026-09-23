@@ -1,0 +1,116 @@
+---
+title: 'KYC/KYB Verification Status in NadaPay'
+sidebarTitle: 'Verification'
+description: 'Check your organization KYB verification status, handle each possible state correctly, and poll for approval before enabling live transaction flows.'
+---
+
+Before your organization — or any child organization you manage — can process live transactions, it must pass NadaPay's KYB (Know Your Business) verification. You check the current status by calling a single GET endpoint, then branch your integration logic based on the returned `status` value. Because the verification process is asynchronous, you will often need to poll this endpoint at a reasonable interval until the status resolves to a terminal state.
+
+<Note>
+  **Sandbox behavior:** organizations are automatically approved in sandbox mode. You do not need to submit any documents or wait for review when testing with a `np_test_...` API key — the status will always return `approved`.
+</Note>
+
+## Check verification status
+
+### Endpoint
+
+```
+GET /organizations/verification/KYB
+```
+
+### Request
+
+```bash
+curl --request GET \
+  --url $baseUrl/organizations/verification/KYB \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "status": "approved",
+    "type": "kyb",
+    "verified_at": "2026-01-01T00:00:00Z",
+    "details": {
+      "business_name": "Acme Corp",
+      "country": "NG"
+    }
+  }
+}
+```
+
+---
+
+## Status values
+
+| Status | Meaning | Can transact in production? |
+|--------|---------|:---------------------------:|
+| `pending` | Verification not yet submitted | ❌ |
+| `review` | Submitted and under review | ❌ |
+| `approved` | Verification passed | ✅ |
+| `rejected` | Verification was rejected | ❌ |
+| `failed` | Verification attempt failed | ❌ |
+
+---
+
+## Handling each status
+
+<Tabs>
+  <Tab title="pending">
+    The organization has not yet submitted its KYB information. Direct the organization's owner to the onboarding flow to complete and submit the required business documentation before you attempt any live processing.
+  </Tab>
+  <Tab title="review">
+    The KYB submission is in progress and is being reviewed by the NadaPay compliance team. Keep the organization in a non-transacting state in your application. Poll this endpoint at a reasonable interval — every few minutes is appropriate — and do not retry aggressively. See the polling strategy below.
+  </Tab>
+  <Tab title="approved">
+    The organization has passed KYB and is cleared to transact in production. Proceed with funding wallets, creating beneficiaries, and executing transactions.
+  </Tab>
+  <Tab title="rejected">
+    The verification was rejected. Inspect the `details` field in the response for information about what caused the rejection, correct the underlying issue, and resubmit through the approved channel (contact NadaPay support or direct the user back through the onboarding flow).
+  </Tab>
+  <Tab title="failed">
+    The verification attempt encountered a technical failure. Treat this as a blocking state. Review the `details` field before retrying or escalating to NadaPay support.
+  </Tab>
+</Tabs>
+
+---
+
+## Polling strategy for `review` state
+
+When status is `review`, call the verification endpoint repeatedly until it transitions to a terminal state (`approved`, `rejected`, or `failed`).
+
+```javascript
+async function waitForApproval(apiKey, baseUrl, intervalMs = 60000) {
+  while (true) {
+    const response = await fetch(`${baseUrl}/organizations/verification/KYB`, {
+      headers: { 'x-api-key': apiKey }
+    });
+
+    const { data } = await response.json();
+
+    if (data.status !== 'review') {
+      return data.status;
+    }
+
+    // Wait before polling again — avoid aggressive retry
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+}
+```
+
+<Warning>
+  Do not poll more frequently than once per minute. Aggressive polling does not speed up the review process and may result in rate limiting.
+</Warning>
+
+---
+
+## Partner flows
+
+If you manage multiple child organizations under a partner account, each child has its own independent verification status. Check the verification endpoint using each child organization's API key (or by authenticating as that child) to retrieve its individual status.
+
+<Card title="Child Organizations" icon="sitemap" href="/docs/child-organizations">
+  Register and manage sub-businesses under your partner account, and set per-child fee markups.
+</Card>

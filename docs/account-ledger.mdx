@@ -1,0 +1,161 @@
+---
+title: 'View the Transaction Ledger for a NadaPay Wallet'
+sidebarTitle: 'Account Ledger'
+description: 'Retrieve paginated debit and credit entries for any NadaPay wallet. Use the ledger for reconciliation, reporting, and auditing transaction history.'
+---
+
+Every NadaPay wallet maintains a full double-entry ledger of all funds movement — every inbound deposit, outbound payout, and internal transfer is recorded as a debit or credit entry. The account ledger endpoint gives you paginated access to this history so you can reconcile your books, build reporting dashboards, or audit specific transactions. For real-time settlement confirmation, rely on webhooks — use the ledger for historical lookups and batch reconciliation.
+
+## Request
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organizations/accounts/acc-uuid-123/ledger?page=1&limit=20&sortBy=createdAt&sortOrder=desc" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Path parameter
+
+<ParamField path="accountId" type="string" required>
+  The ID of the wallet whose ledger you want to retrieve. Use the `id` returned by List Financial Accounts or Get Account Details.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="page" type="integer" default="1">
+  The page number to retrieve. Pages are 1-indexed. Use in combination with `limit` to paginate through a large ledger.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="10">
+  The number of ledger entries to return per page. Increase this to retrieve more entries per call (check API documentation for the maximum allowed value).
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  The field to sort ledger entries by. Use `createdAt` to sort by transaction timestamp.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  The sort direction. Use `desc` to get the most recent entries first, or `asc` to get the oldest entries first.
+</ParamField>
+
+## Response
+
+The response returns a paginated list of ledger entries for the requested wallet.
+
+<ResponseField name="data" type="array">
+  An array of ledger entry objects for the current page.
+</ResponseField>
+
+<ResponseField name="data[].id" type="string">
+  The unique ID of this ledger entry.
+</ResponseField>
+
+<ResponseField name="data[].type" type="string">
+  Entry type: `DEBIT` for outbound funds (payouts, fees) or `CREDIT` for inbound funds (deposits, incoming transfers).
+</ResponseField>
+
+<ResponseField name="data[].amount" type="number">
+  The absolute value of the funds movement in the wallet's currency.
+</ResponseField>
+
+<ResponseField name="data[].currency" type="string">
+  The currency of the ledger entry.
+</ResponseField>
+
+<ResponseField name="data[].balance" type="number">
+  The running wallet balance after this entry was applied.
+</ResponseField>
+
+<ResponseField name="data[].description" type="string">
+  A human-readable description of the entry (e.g. `Payout to Jane Mensah`, `Deposit via bank transfer`).
+</ResponseField>
+
+<ResponseField name="data[].transactionId" type="string">
+  The ID of the transaction that generated this ledger entry. Use this to correlate a ledger entry with a specific payout or deposit.
+</ResponseField>
+
+<ResponseField name="data[].createdAt" type="string">
+  ISO 8601 timestamp of when this ledger entry was recorded.
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  Pagination metadata.
+</ResponseField>
+
+<ResponseField name="meta.page" type="integer">
+  The current page number.
+</ResponseField>
+
+<ResponseField name="meta.limit" type="integer">
+  The number of entries per page.
+</ResponseField>
+
+<ResponseField name="meta.total" type="integer">
+  The total number of ledger entries across all pages.
+</ResponseField>
+
+<ResponseField name="meta.totalPages" type="integer">
+  The total number of pages given the current `limit`.
+</ResponseField>
+
+## Understanding debit and credit entries
+
+Every funds movement on a NadaPay wallet produces exactly one ledger entry:
+
+| Entry type | What causes it | Effect on balance |
+| --- | --- | --- |
+| `CREDIT` | Incoming deposit, incoming transfer, reversal of a failed payout | Balance increases |
+| `DEBIT` | Outgoing payout, fee charge, outgoing internal transfer | Balance decreases |
+
+The `balance` field on each entry shows the running wallet balance **after** that entry was applied, so you can reconstruct the complete balance history by reading entries in chronological order.
+
+## Pagination pattern
+
+Use the `page` and `limit` parameters together to page through a large ledger. Retrieve the first page, check `meta.totalPages`, and continue incrementing `page` until you have fetched all entries.
+
+```javascript
+async function fetchAllLedgerEntries(accountId) {
+  const entries = [];
+  let page = 1;
+  let totalPages = 1;
+
+  while (page <= totalPages) {
+    const response = await fetch(
+      `${baseUrl}/organizations/accounts/${accountId}/ledger?page=${page}&limit=50&sortOrder=asc`,
+      { headers: { 'x-api-key': process.env.NADAPAY_API_KEY } }
+    );
+    const result = await response.json();
+
+    entries.push(...result.data);
+    totalPages = result.meta.totalPages;
+    page++;
+  }
+
+  return entries;
+}
+```
+
+<Note>
+  For large wallets with thousands of entries, fetch only the pages you need rather than pulling the entire ledger in one go. Use `sortOrder=desc` and stop early once you have retrieved the entries for your reconciliation window.
+</Note>
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Reconciliation" icon="file-invoice">
+    Page through ledger entries for a given time period and match each `transactionId` against your internal records. The `balance` field lets you verify your running balance at any point in time.
+  </Card>
+  <Card title="Reporting" icon="chart-bar">
+    Aggregate ledger entries by `type` and `createdAt` to build daily or monthly financial summaries. Filter by `sortOrder=asc` to process entries in chronological order for accurate period totals.
+  </Card>
+  <Card title="Auditing" icon="magnifying-glass">
+    Use `transactionId` to find the specific ledger entries that correspond to a disputed or failed transaction. Each payout generates at least one debit entry — locate it quickly by searching recent ledger pages.
+  </Card>
+  <Card title="Balance verification" icon="scale-balanced">
+    Replay entries in chronological order to independently verify that the current wallet balance matches the sum of all credits minus all debits since the account was created.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Do not use the ledger for real-time settlement logic. Ledger entries are recorded after the fact — use webhook events to trigger business logic the moment a transaction settles, and use the ledger for historical lookups only.
+</Warning>

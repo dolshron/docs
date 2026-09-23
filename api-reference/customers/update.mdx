@@ -1,0 +1,97 @@
+---
+title: 'PATCH /organization/customers/:id — Update Customer'
+sidebarTitle: 'Update'
+description: 'Update one or more fields on an existing customer record. Send only the fields you want to change — omitted fields remain unchanged.'
+---
+
+This endpoint uses partial updates — you only need to include the fields you want to modify. This means you can update a phone number without touching the customer's name or email, for example. If you change `email`, the new value must still be unique across your organization.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the customer to update.
+</ParamField>
+
+## Request body
+
+<ParamField body="name" type="string">
+  Updated customer name.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Updated email address. Must remain unique within your organization.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string">
+  Updated phone number in E.164 format.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Updated mailing or billing address.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Updated metadata object. This replaces the existing metadata — include all key-value pairs you want to preserve.
+</ParamField>
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organization/customers/cus_abc123 \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "phoneNumber": "+2348111111111",
+    "address": "10 Marina, Lagos"
+  }'
+```
+
+## Response
+
+A `200` response returns the updated customer object.
+
+<ResponseField name="id" type="string">
+  The customer's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The customer's current name.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  The customer's current email address.
+</ResponseField>
+
+<ResponseField name="phone" type="string">
+  The customer's current phone number.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  The customer's current address.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  The customer's current metadata.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 creation timestamp (unchanged).
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Customer updated successfully",
+  "data": {
+    "id": "cus_abc123",
+    "name": "Biffco Enterprise",
+    "email": "biffco@enterprise.com",
+    "phone": "+2348111111111",
+    "address": "10 Marina, Lagos",
+    "metadata": {
+      "internal_id": "cust_99182"
+    },
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```

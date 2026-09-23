@@ -1,0 +1,110 @@
+---
+title: "PATCH /beneficiaries/:id — Update Beneficiary Profile"
+sidebarTitle: "Update Beneficiary"
+description: "Update the name, email, phone, or status of an existing beneficiary profile without affecting its linked payout accounts or transaction history."
+---
+
+Use this endpoint to modify the profile-level details of an existing beneficiary — such as correcting a name, updating a contact email, or changing the beneficiary's status. This endpoint only updates the beneficiary profile itself; to modify or replace a payout account attached to the beneficiary, use the Update Account endpoint instead. You only need to include the fields you want to change.
+
+## Request
+
+**PATCH** `https://core.nadapay.io/api/v1/beneficiaries/{id}`
+
+```bash
+curl --request PATCH \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Amara K. Diallo",
+    "email": "amara.k.diallo@example.com"
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+<ParamField header="x-idempotency-key" type="string" required>
+  A unique UUID for this request to prevent duplicate processing on retries.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the beneficiary you want to update.
+</ParamField>
+
+## Body Parameters
+
+All body parameters are optional. Include only the fields you want to change.
+
+<ParamField body="name" type="string">
+  Updated full name for the beneficiary.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Updated email address for the beneficiary.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Updated phone number in international format, e.g. `+2348012345678`.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Updated lifecycle status for the beneficiary. Use this to activate or deactivate a profile without deleting it.
+</ParamField>
+
+## Response
+
+A successful `200 OK` response returns the updated beneficiary profile.
+
+```json
+{
+  "data": {
+    "id": "ben_01HXXXXXXXXXXXXXXXXXX",
+    "name": "Amara K. Diallo",
+    "email": "amara.k.diallo@example.com",
+    "phone": "+2348012345678",
+    "type": "EXTERNAL_BANK",
+    "status": "active",
+    "currency": "NGN",
+    "updated_at": "2025-06-01T09:30:00Z"
+  }
+}
+```
+
+<ResponseField name="data.id" type="string">
+  Unique identifier for the beneficiary.
+</ResponseField>
+
+<ResponseField name="data.name" type="string">
+  Updated display name of the beneficiary.
+</ResponseField>
+
+<ResponseField name="data.email" type="string">
+  Updated email address.
+</ResponseField>
+
+<ResponseField name="data.phone" type="string">
+  Updated phone number.
+</ResponseField>
+
+<ResponseField name="data.type" type="string">
+  Destination type — unchanged by this endpoint.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Current lifecycle status after the update.
+</ResponseField>
+
+<ResponseField name="data.currency" type="string">
+  Payout currency — unchanged by this endpoint.
+</ResponseField>
+
+<ResponseField name="data.updated_at" type="string">
+  ISO 8601 timestamp of when this update was applied.
+</ResponseField>

@@ -1,0 +1,114 @@
+---
+title: 'NadaPay REST API Reference — Authentication & Conventions'
+sidebarTitle: 'Overview'
+description: 'Complete reference for the NadaPay REST API — authentication, request format, error handling, rate limits, and links to every endpoint.'
+---
+
+The NadaPay API is a REST API that accepts JSON request bodies and returns JSON responses. Every call requires an API key, and mutating requests additionally require an idempotency key so that retried requests never create duplicate transactions. This page covers the conventions that apply to every endpoint in the reference.
+
+## Base URL
+
+All endpoints share a single base URL:
+
+```
+https://core.nadapay.io/api/v1
+```
+
+## Authentication
+
+Include your API key in the `x-api-key` header on every request. You can retrieve your key from the NadaPay dashboard.
+
+```bash
+curl https://core.nadapay.io/api/v1/transactions/rate \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+## Idempotency
+
+All `POST` requests that create or mutate resources require an `x-idempotency-key` header. Supply a unique UUID for every distinct operation. If you retry a request with the same key, the API returns the original response instead of creating a duplicate.
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/execute \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-idempotency-key: 550e8400-e29b-41d4-a716-446655440000" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+## Request and Response Format
+
+All request bodies must be sent as `application/json`. All successful responses return `application/json`. Timestamps are ISO 8601 strings. Monetary amounts are integers representing the smallest currency unit unless otherwise noted.
+
+## Error Format
+
+Errors follow a consistent shape across all endpoints:
+
+```json
+{
+  "statusCode": 422,
+  "message": "amount must not be less than minimum_amount",
+  "error": "Unprocessable Entity"
+}
+```
+
+<ResponseField name="statusCode" type="number">
+  The HTTP status code repeated inside the response body.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable description of what went wrong.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  The canonical HTTP error phrase corresponding to the status code.
+</ResponseField>
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | OK — request succeeded, response body contains the result. |
+| `201` | Created — resource was created successfully. |
+| `400` | Bad Request — the request body is malformed or missing required fields. |
+| `401` | Unauthorized — the `x-api-key` header is missing or invalid. |
+| `403` | Forbidden — the authenticated account does not have permission for this action. |
+| `404` | Not Found — the requested resource does not exist. |
+| `409` | Conflict — the request conflicts with the current state (e.g. duplicate idempotency key with different parameters). |
+| `422` | Unprocessable Entity — the request is syntactically valid but fails business validation. |
+| `500` | Internal Server Error — something went wrong on NadaPay's side. |
+
+## Rate Limits
+
+NadaPay enforces per-key rate limits. When you exceed the limit, the API returns a `429 Too Many Requests` response. Implement exponential back-off and retry logic in your client. Contact [support@nadapay.io](mailto:support@nadapay.io) if your production workload requires a higher limit.
+
+---
+
+## API Sections
+
+<CardGroup cols={2}>
+  <Card title="Get Rate" icon="arrow-right-arrow-left" href="/api-reference/transactions/get-rate">
+    Fetch indicative exchange rates for a currency pair.
+  </Card>
+  <Card title="Get Networks" icon="network-wired" href="/api-reference/transactions/get-networks">
+    List supported payment networks and rails for a country.
+  </Card>
+  <Card title="Get Limits" icon="gauge" href="/api-reference/transactions/get-limits">
+    Check minimum and maximum amounts for a corridor.
+  </Card>
+  <Card title="Deposit Instructions" icon="arrow-down-to-bracket" href="/api-reference/transactions/deposit-instructions">
+    Retrieve funding instructions for a NadaPay wallet.
+  </Card>
+  <Card title="Generate Quote" icon="file-invoice-dollar" href="/api-reference/transactions/generate-quote">
+    Lock in a rate and fees before executing a payout.
+  </Card>
+  <Card title="Execute Transaction" icon="bolt" href="/api-reference/transactions/execute">
+    Execute a payout from a confirmed quote.
+  </Card>
+  <Card title="Batch Execute" icon="layer-group" href="/api-reference/transactions/batch-execute">
+    Submit multiple payouts in a single request.
+  </Card>
+  <Card title="Resolve Bank Account" icon="building-columns" href="/api-reference/transactions/resolve-bank-account">
+    Verify a bank account holder name before creating a beneficiary.
+  </Card>
+</CardGroup>

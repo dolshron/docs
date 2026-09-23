@@ -1,0 +1,160 @@
+---
+title: 'List and Retrieve NadaPay Financial Accounts'
+sidebarTitle: 'Financial Accounts'
+description: 'Fetch all wallets your organization holds, retrieve a single account by ID or NadaPay code, and upgrade a fiat wallet to a virtual bank account.'
+---
+
+NadaPay financial accounts are the wallets your organization uses to hold, send, and receive funds. Every currency you operate in has its own account, each with a unique ID and a human-readable NadaPay code in the `WAL-xxx` format. This page covers how to list all of your accounts, retrieve a single account by its ID, look up an account by its NadaPay code, and upgrade a fiat account to a virtual bank account that can receive direct bank transfers.
+
+## List all financial accounts
+
+Call `GET /organizations/accounts` to retrieve all wallets your organization holds. Use the optional query parameters to filter results by status or currency.
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organizations/accounts?status=ACTIVE&currency=USD" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Query parameters
+
+<ParamField query="status" type="string">
+  Filter by account status. Use `ACTIVE` to return only accounts that can send and receive funds. Other possible values include `INACTIVE` and `SUSPENDED`.
+</ParamField>
+
+<ParamField query="currency" type="string">
+  Filter by currency code (e.g. `USD`, `NGN`, `USDC`). Returns only the wallet for that currency.
+</ParamField>
+
+### Response
+
+```json
+[
+  {
+    "id": "acc-uuid-123",
+    "name": "Main USD Wallet",
+    "currency": "USD",
+    "walletStatus": "ACTIVE",
+    "nadapayCode": "WAL-123"
+  },
+  {
+    "id": "acc-uuid-456",
+    "name": "NGN Operations Wallet",
+    "currency": "NGN",
+    "walletStatus": "ACTIVE",
+    "nadapayCode": "WAL-456"
+  }
+]
+```
+
+<ResponseField name="id" type="string">
+  The unique account ID. Use this in all API calls that reference a specific wallet.
+</ResponseField>
+<ResponseField name="name" type="string">
+  The display name of the wallet.
+</ResponseField>
+<ResponseField name="currency" type="string">
+  The currency code this wallet holds.
+</ResponseField>
+<ResponseField name="walletStatus" type="string">
+  Current status of the wallet: `ACTIVE`, `INACTIVE`, or `SUSPENDED`.
+</ResponseField>
+<ResponseField name="nadapayCode" type="string">
+  The human-readable identifier in `WAL-xxx` format. Use this for internal transfers and account lookups.
+</ResponseField>
+
+## Get a single account by ID
+
+Call `GET /organizations/accounts/{accountId}` to retrieve the full details of one specific wallet.
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organizations/accounts/acc-uuid-123" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Path parameter
+
+<ParamField path="accountId" type="string" required>
+  The unique ID of the wallet to retrieve.
+</ParamField>
+
+### Response
+
+```json
+{
+  "id": "acc-uuid-123",
+  "name": "Main USD Wallet",
+  "currency": "USD",
+  "walletStatus": "ACTIVE",
+  "nadapayCode": "WAL-123"
+}
+```
+
+## Look up an account by NadaPay code
+
+Use `GET /organizations/nadapay-code/{code}` to resolve a `WAL-xxx` NadaPay code to the full account record. Use this before executing a wallet-to-wallet transfer to confirm you are sending to the correct destination.
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organizations/nadapay-code/WAL-123" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Path parameter
+
+<ParamField path="code" type="string" required>
+  The NadaPay code to look up, in the format `WAL-xxx`.
+</ParamField>
+
+### Response
+
+Returns the account information tied to that NadaPay code — the same shape as the Get Account Details response.
+
+<Tip>
+  Always look up a NadaPay code before sending funds to a code provided by an external party. Confirm the account name matches your intended recipient before generating a quote.
+</Tip>
+
+## Upgrade to a virtual account
+
+Call `POST /organizations/upgrade-virtual-account` to provision a permanent virtual bank account number for a fiat wallet. After the upgrade, the wallet can receive direct bank transfers from any bank — no additional API calls are required for each deposit.
+
+This is a one-time action per currency. Once upgraded, the virtual account number is attached to the wallet permanently.
+
+```bash
+curl --request POST \
+  --url $baseUrl/organizations/upgrade-virtual-account \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "currency": "USD"
+  }'
+```
+
+### Request body
+
+<ParamField body="currency" type="string" required>
+  The currency of the fiat wallet you want to upgrade (e.g. `USD`, `NGN`, `GHS`).
+</ParamField>
+
+### Response
+
+Returns the provisioned virtual account details.
+
+<ResponseField name="accountNumber" type="string">
+  The virtual bank account number assigned to this wallet.
+</ResponseField>
+<ResponseField name="bankName" type="string">
+  The name of the bank holding the virtual account.
+</ResponseField>
+<ResponseField name="currency" type="string">
+  The currency of the upgraded wallet.
+</ResponseField>
+<ResponseField name="walletId" type="string">
+  The wallet ID that is now linked to this virtual account.
+</ResponseField>
+
+<Info>
+  Upgrading to a virtual account is a one-time, per-currency operation. Calling this endpoint again for the same currency will return the existing virtual account details rather than provisioning a new one.
+</Info>

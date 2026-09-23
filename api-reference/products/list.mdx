@@ -1,0 +1,68 @@
+---
+title: 'GET /organization/products — List All Products'
+sidebarTitle: 'List'
+description: 'Retrieve a paginated list of all products in your organization. Use this to populate product selectors in your UI or audit your catalogue.'
+---
+
+Use this endpoint to fetch all products you have defined in your organization. The response is paginated and sorted by `createdAt` descending by default. You can use the results to populate product pickers when building invoices or payment links, or to audit your entire product catalogue at once.
+
+## Query parameters
+
+<ParamField query="page" type="number" default="1">
+  The page number to retrieve.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  The maximum number of products to return per page.
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  The field to sort results by.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort direction. Accepted values: `asc`, `desc`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/products?page=1&limit=10' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns a paginated list of product objects.
+
+<ResponseField name="data" type="array">
+  Array of product records. Each item contains `id`, `name`, `description`, `price`, `currency`, `isActive`, `environment`, and `createdAt`.
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  Pagination metadata including `page`, `limit`, and `total`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Products retrieved successfully",
+  "data": [
+    {
+      "id": "prod_01hw3x7k2r4p5q6m8n9v",
+      "name": "Premium Plan",
+      "description": "Access to all premium features with priority support.",
+      "currency": "USD",
+      "price": 12000000,
+      "isActive": true,
+      "environment": "live",
+      "createdAt": "2026-04-24T10:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1
+  }
+}
+```

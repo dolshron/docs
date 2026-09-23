@@ -1,0 +1,77 @@
+---
+title: 'Check Currency Balances in Your NadaPay Wallets'
+sidebarTitle: 'Currency Balance'
+description: 'Retrieve the current balance for a specific currency in your NadaPay organization. Use this for pre-flight checks before generating a payout quote.'
+---
+
+Before generating a payout quote, you should confirm that the source wallet holds enough available funds to cover the transaction amount and fees. The currency balance endpoint gives you a fast, targeted way to check the balance for one specific currency without fetching the full list of accounts. Pass the currency code as a path parameter and receive the current balance in return.
+
+## Request
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organizations/balance/USD" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Path parameter
+
+<ParamField path="currency" type="string" required>
+  The currency code to check the balance for. Accepts fiat codes (e.g. `USD`, `NGN`, `GHS`, `KES`) and stablecoin codes (e.g. `USDC`, `USDT`). Must match an active wallet in your organization.
+</ParamField>
+
+## Response
+
+The response returns the balance details for the requested currency wallet.
+
+<ResponseField name="currency" type="string">
+  The currency code of the wallet (mirrors the path parameter you sent).
+</ResponseField>
+<ResponseField name="balance" type="number">
+  The total ledger balance for this currency, including any funds that may be reserved or pending.
+</ResponseField>
+<ResponseField name="availableBalance" type="number">
+  The portion of the balance that is immediately available to debit — i.e. the total balance minus any reserved or in-flight amounts. Use this value when validating whether you have enough funds for a payout.
+</ResponseField>
+
+<Note>
+  Always validate against `availableBalance`, not `balance`. The total balance may include funds that are already earmarked for in-flight transactions and cannot be debited again.
+</Note>
+
+## When to use this vs. List Financial Accounts
+
+<CardGroup cols={2}>
+  <Card title="Use currency balance" icon="scale-balanced">
+    - Pre-flight check before generating a quote
+    - Checking whether a specific wallet is sufficiently funded
+    - Lightweight balance polling in a backend service
+    - Any time you already know the currency and only need the number
+  </Card>
+  <Card title="Use List Financial Accounts" icon="building-columns">
+    - Rendering a multi-currency wallet dashboard
+    - Discovering which currencies your organization holds
+    - Checking status and metadata across all wallets at once
+    - Initial account setup and onboarding flows
+  </Card>
+</CardGroup>
+
+## Example: validate balance before quoting
+
+Use the following pattern to confirm sufficient funds before generating a quote:
+
+```javascript
+// 1. Fetch the available balance for the source currency
+const balanceResponse = await fetch(
+  `${baseUrl}/organizations/balance/USD`,
+  { headers: { 'x-api-key': process.env.NADAPAY_API_KEY } }
+);
+const { availableBalance } = await balanceResponse.json();
+
+// 2. Validate against the transaction amount (in smallest unit)
+const transactionAmount = 100000; // $1,000.00 in cents
+if (availableBalance < transactionAmount) {
+  throw new Error('Insufficient balance — top up your USD wallet before proceeding.');
+}
+
+// 3. Proceed to generate a quote
+```

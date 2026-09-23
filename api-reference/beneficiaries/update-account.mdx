@@ -1,0 +1,118 @@
+---
+title: "PATCH /beneficiaries/:id/accounts/:accountId — Update"
+sidebarTitle: "Update Account"
+description: "Update the currency, type, destination details, or status of a payout account already linked to an existing beneficiary profile in your organization."
+---
+
+Use this endpoint to modify a payout account that is already linked to a beneficiary — for example, to update a bank account number after a recipient's account changes, or to deactivate an account without removing it entirely. You only need to send the fields you want to change; omitted fields retain their current values. Include an idempotency key to safely retry the request without applying the update twice.
+
+## Request
+
+**PATCH** `https://core.nadapay.io/api/v1/beneficiaries/{id}/accounts/{accountId}`
+
+```bash
+curl --request PATCH \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts/acc_01HXXXXXXXXXXXXXXXXXX' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "details": {
+      "accountNumber": "9876543210",
+      "accountName": "Amara K. Diallo",
+      "networkId": "net_zenith_ng",
+      "country": "NG"
+    }
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+<ParamField header="x-idempotency-key" type="string" required>
+  A unique UUID to prevent duplicate updates on retries.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the beneficiary that owns this account.
+</ParamField>
+
+<ParamField path="accountId" type="string" required>
+  The unique identifier of the payout account you want to update. This is the `id` returned when the account was added.
+</ParamField>
+
+## Body Parameters
+
+All body parameters are optional. Include only the fields you want to change.
+
+<ParamField body="currency" type="string">
+  Updated currency code for this payout account, e.g. `NGN`, `USD`.
+</ParamField>
+
+<ParamField body="type" type="string">
+  Updated destination type. One of `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ParamField>
+
+<ParamField body="details" type="object">
+  Updated destination-specific fields. Provide only the subfields you want to change. For bank accounts, include `accountNumber`, `accountName`, `networkId`, and `country`. For mobile money, include `phoneNumber`, `provider`, `country`, and `networkId`. For crypto, include `chain` and `address`.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Updated status for the account. Use this to activate or deactivate an account without deleting it.
+</ParamField>
+
+## Response
+
+A successful `200 OK` response returns the updated payout account object.
+
+```json
+{
+  "data": {
+    "id": "acc_01HXXXXXXXXXXXXXXXXXX",
+    "beneficiaryId": "ben_01HXXXXXXXXXXXXXXXXXX",
+    "currency": "NGN",
+    "type": "EXTERNAL_BANK",
+    "status": "active",
+    "details": {
+      "accountNumber": "9876543210",
+      "accountName": "Amara K. Diallo",
+      "networkId": "net_zenith_ng",
+      "country": "NG"
+    },
+    "updated_at": "2025-06-01T10:00:00Z"
+  }
+}
+```
+
+<ResponseField name="data.id" type="string">
+  Unique identifier for the payout account.
+</ResponseField>
+
+<ResponseField name="data.beneficiaryId" type="string">
+  The ID of the beneficiary this account belongs to.
+</ResponseField>
+
+<ResponseField name="data.currency" type="string">
+  Currency this payout account is configured for.
+</ResponseField>
+
+<ResponseField name="data.type" type="string">
+  Destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Current status of the payout account after the update.
+</ResponseField>
+
+<ResponseField name="data.details" type="object">
+  The destination details as stored after the update.
+</ResponseField>
+
+<ResponseField name="data.updated_at" type="string">
+  ISO 8601 timestamp of when this update was applied.
+</ResponseField>

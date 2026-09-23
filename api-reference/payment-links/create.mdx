@@ -1,0 +1,180 @@
+---
+title: 'POST /organization/payment-links — Create Payment Link'
+sidebarTitle: 'Create'
+description: 'Create a shareable hosted payment link with a fixed or variable amount, optional expiry, and configurable data collection fields for customers.'
+---
+
+A payment link gives you a hosted, shareable URL that you can send to any customer without writing any frontend code. You configure the amount, currency, settlement wallet, optional expiry, and what additional data to collect from the payer — then hand the returned `url` directly to your customer. Payment links support both fixed-price and variable-amount flows, product-based billing, custom success messaging, and redirect URLs for post-payment routing. Once created, a link is immediately active and can be shared via email, SMS, or any other channel.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/organization/payment-links
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  Internal display name for this payment link — shown in your dashboard and used for reporting. Example: `"Consultation Fee"`.
+</ParamField>
+
+<ParamField body="checkoutType" type="string" required default="CUSTOM">
+  Whether this link bills against a product or a custom amount. Allowed values: `PRODUCT`, `CUSTOM`. Use `PRODUCT` when the link is tied to a catalog item; use `CUSTOM` for ad-hoc or invoice-style payments.
+</ParamField>
+
+<ParamField body="productId" type="string">
+  The ID of the product to bill against. Required when `checkoutType` is `PRODUCT`.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Fixed payment amount in the smallest currency unit (e.g. cents for USD). Leave this field out when `isVariableAmount` is `true` and you want the customer to enter their own amount.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code for the payment, e.g. `"USD"`, `"NGN"`.
+</ParamField>
+
+<ParamField body="isVariableAmount" type="boolean" required>
+  Set to `true` to let the customer enter their own payment amount. Set to `false` when you want to enforce a fixed `amount`.
+</ParamField>
+
+<ParamField body="settlementAccountId" type="string" required>
+  The ID of the NadaPay wallet where collected funds will land after a successful payment.
+</ParamField>
+
+<ParamField body="collectAddress" type="boolean">
+  Set to `true` to add a shipping or billing address field to the payment form. Defaults to `false`.
+</ParamField>
+
+<ParamField body="collectPhoneNumber" type="boolean">
+  Set to `true` to add a phone number field to the payment form. Defaults to `false`.
+</ParamField>
+
+<ParamField body="redirectUrl" type="string">
+  URL to redirect the customer to after a successful payment. If omitted, the customer sees the default NadaPay success screen.
+</ParamField>
+
+<ParamField body="successMessage" type="string">
+  Custom message displayed on the success screen after payment is confirmed. Example: `"Thanks for your payment!"`.
+</ParamField>
+
+<ParamField body="expiresAt" type="string">
+  ISO 8601 timestamp after which the payment link stops accepting new payments. Leave empty for a link that never expires.
+</ParamField>
+
+<ParamField body="customFieldLabel" type="string">
+  Label for an optional free-text field shown to the customer during checkout. Use this for collecting reference numbers, invoice IDs, or other custom data. Example: `"Invoice Number"`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description displayed to the customer on the payment page, providing context about what they are paying for.
+</ParamField>
+
+<ParamField body="image" type="string">
+  URL of an image to display on the payment page, such as a product photo or your brand logo.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/payment-links \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "name": "Consultation Fee",
+    "checkoutType": "CUSTOM",
+    "amount": 5000,
+    "currency": "USD",
+    "isVariableAmount": false,
+    "settlementAccountId": "wallet-uuid-here",
+    "collectAddress": false,
+    "collectPhoneNumber": false,
+    "redirectUrl": "https://yoursite.com/thank-you",
+    "successMessage": "Thanks for your payment!",
+    "expiresAt": "2024-12-31T23:59:59.000Z",
+    "customFieldLabel": "Invoice Number"
+  }'
+```
+
+## Response
+
+A `201 Created` response confirms the payment link was created. The `url` field in the response is the shareable link to send to your customer.
+
+<ResponseField name="success" type="boolean">
+  `true` when the payment link is created successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `201` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Payment link created successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The newly created payment link object.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      Unique payment link identifier. Use this `id` when updating, archiving, or sharing the link.
+    </ResponseField>
+
+    <ResponseField name="slug" type="string">
+      URL-friendly identifier used as the path segment in the hosted payment page URL.
+    </ResponseField>
+
+    <ResponseField name="url" type="string">
+      The fully formed, shareable payment link URL. This is what you send to your customer. Example: `"https://pay.nadapay.io/monthly-subscription"`.
+    </ResponseField>
+
+    <ResponseField name="amount" type="number">
+      The fixed payment amount in the smallest currency unit, echoed from your request.
+    </ResponseField>
+
+    <ResponseField name="currency" type="string">
+      The currency code for this payment link.
+    </ResponseField>
+
+    <ResponseField name="isActive" type="boolean">
+      `true` when the link is active and accepting payments.
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of when the payment link was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Payment link created successfully",
+  "data": {
+    "id": "pl_abc123",
+    "slug": "consultation-fee",
+    "url": "https://pay.nadapay.io/consultation-fee",
+    "amount": 5000,
+    "currency": "USD",
+    "isActive": true,
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  The `url` field is the shareable link — hand this directly to your customer via email, SMS, or any other channel. Once shared, avoid recreating a new link for the same purpose; instead, use the [Update Payment Link](/api-reference/payment-links/update) endpoint to modify an existing link.
+</Note>

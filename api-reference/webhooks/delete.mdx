@@ -1,0 +1,37 @@
+---
+title: 'DELETE /organization/webhooks/:id — Delete a Webhook'
+sidebarTitle: 'Delete'
+description: 'Remove a registered webhook endpoint. Delivery stops immediately — to temporarily pause deliveries without deleting, set the webhook status to INACTIVE.'
+---
+
+Use this endpoint to permanently deregister a webhook endpoint. Once deleted, NadaPay will stop delivering event notifications to that URL immediately. If you only need to pause deliveries temporarily, consider setting `status: "INACTIVE"` via the [Update Webhook](/api-reference/webhooks/update) endpoint instead — that way you can re-enable it later without re-registering.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the webhook to delete.
+</ParamField>
+
+```bash
+curl --request DELETE \
+  --url https://core.nadapay.io/api/v1/organization/webhooks/wh_abc123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response confirms the webhook was removed.
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Webhook removed successfully."
+}
+```
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `404` | No webhook found with the given `id`. |

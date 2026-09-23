@@ -1,0 +1,155 @@
+---
+title: 'Execute a Payout Transaction with NadaPay'
+sidebarTitle: 'Execute Transaction'
+description: 'Submit a quoted payout transaction to NadaPay. Pass the quoteId from Generate Quote and matching source and destination details to trigger the transfer.'
+---
+
+Executing a transaction is the final step in the single-payout flow. You call `POST /transactions/execute` with the `quoteId` you received from the quote step along with the source and destination identifiers. NadaPay validates that the values match the priced quote, debits the source account, and dispatches the payment. After execution, the transaction moves through its settlement states asynchronously — monitor the final outcome via webhook.
+
+## Prerequisites
+
+Before calling `POST /transactions/execute`, confirm all of the following:
+
+1. You have a valid `x-api-key`.
+2. You have a unique `x-idempotency-key` for this request — see the [Idempotency](#idempotency) section below.
+3. You have a valid, unexpired `quoteId` from `POST /transactions/quote`.
+4. The source account has sufficient available balance to cover the transaction amount and fees.
+5. The `source` and `destination` values you send exactly match what was priced in the quote.
+
+<Warning>
+  Do not modify the source amount or destination details between generating the quote and calling execute. Any mismatch will cause the execution to fail and you will need to generate a new quote.
+</Warning>
+
+## Execute a transaction
+
+```bash
+curl --request POST \
+  --url $baseUrl/transactions/execute \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "quoteId": "qte_01HXXXXXXXXXXXXXXXXXX",
+    "reason": "salary",
+    "reasonDescription": "Monthly payroll disbursement",
+    "metadata": {
+      "employeeId": "emp-001",
+      "payrollMonth": "2025-01"
+    },
+    "source": {
+      "accountId": "acc-uuid-123",
+      "nadapayCode": "WAL-123",
+      "amount": 100000
+    },
+    "destination": {
+      "beneficiaryAccountId": "ben-acc-uuid-456",
+      "accountId": "acc-uuid-789",
+      "nadapayCode": "WAL-456"
+    }
+  }'
+```
+
+### Request fields
+
+<ParamField body="quoteId" type="string" required>
+  The `quoteId` returned by `POST /transactions/quote`. This locks the rate and terms for the transaction.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  A short category for the transfer purpose (e.g. `salary`, `gift`, `invoice`, `refund`). Required for compliance purposes on most corridors.
+</ParamField>
+
+<ParamField body="reasonDescription" type="string">
+  A human-readable description of the transfer reason. Provide additional context beyond the `reason` category.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Optional key-value pairs for your own internal reference — returned on the transaction object and in all webhook payloads for this transaction.
+</ParamField>
+
+<ParamField body="source.accountId" type="string">
+  The ID of the NadaPay account to debit. Must match the source account used when generating the quote.
+</ParamField>
+
+<ParamField body="source.nadapayCode" type="string">
+  The NadaPay code (`WAL-xxx` format) of the source account, as an alternative to `accountId`.
+</ParamField>
+
+<ParamField body="source.amount" type="integer">
+  The amount to debit in the smallest currency unit (e.g. cents for USD). Must match the amount priced in the quote.
+</ParamField>
+
+<ParamField body="destination.beneficiaryAccountId" type="string">
+  The ID of the beneficiary account to receive funds. Use this for external (bank, mobile money, crypto) recipients.
+</ParamField>
+
+<ParamField body="destination.accountId" type="string">
+  The NadaPay account ID of the recipient. Use this for internal wallet-to-wallet transfers.
+</ParamField>
+
+<ParamField body="destination.nadapayCode" type="string">
+  The NadaPay code (`WAL-xxx` format) of the destination account for internal transfers.
+</ParamField>
+
+### Response
+
+A successful response confirms the transaction has been created and is in progress. Save the returned identifiers immediately for monitoring and reconciliation.
+
+<ResponseField name="id" type="string">
+  The unique transaction ID. Use this to look up the transaction and correlate webhook events.
+</ResponseField>
+<ResponseField name="status" type="string">
+  The initial status of the transaction, typically `PENDING` or `PROCESSING` immediately after execution.
+</ResponseField>
+<ResponseField name="quoteId" type="string">
+  The quote ID this transaction was created from.
+</ResponseField>
+<ResponseField name="source" type="object">
+  Details of the debited source account and the amount deducted.
+</ResponseField>
+<ResponseField name="destination" type="object">
+  Details of the destination beneficiary account and the amount to be received.
+</ResponseField>
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the transaction was created.
+</ResponseField>
+
+<Note>
+  Save both the transaction `id` and the `quoteId` from the response. You will need the transaction `id` to correlate incoming webhook events and for customer support queries.
+</Note>
+
+## Idempotency
+
+Supply a unique `x-idempotency-key` header on every execute request. If you retry a request with the same idempotency key (for example after a network timeout), NadaPay returns the original response instead of creating a duplicate transaction. Use a fresh UUID for each new transaction you intend to create.
+
+<Tip>
+  Generate your idempotency key before you call the quote endpoint, and use the same key for the execute call tied to that quote. This makes it trivial to trace a quote-to-execute pair in your logs.
+</Tip>
+
+## Monitoring after execution
+
+After a successful execute call, the transaction moves through its settlement states asynchronously. Do not poll the transaction status as a substitute for webhooks.
+
+Configure a webhook endpoint on your NadaPay account to receive event notifications. The webhook delivers the authoritative final state: `COMPLETED`, `FAILED`, or `REVERSED`. Trigger any downstream business logic (e.g. marking an invoice as paid, updating a ledger entry) only after receiving the `COMPLETED` webhook event.
+
+<Info>
+  If your webhook endpoint is temporarily unavailable, NadaPay retries delivery with exponential backoff. Ensure your endpoint is idempotent — it may receive the same event more than once.
+</Info>
+
+## Common failure reasons
+
+<Accordion title="Quote is expired or invalid">
+  Quotes are time-limited. If the quote has expired, generate a new one with `POST /transactions/quote` and use the new `quoteId` in your execute request.
+</Accordion>
+
+<Accordion title="Insufficient source account balance">
+  The source account does not have enough available balance to cover the transaction amount and fees. Check the current balance with `GET /organizations/balance/{currency}` before retrying.
+</Accordion>
+
+<Accordion title="Source or destination values do not match the quote">
+  The `accountId`, `amount`, or `beneficiaryAccountId` you sent do not match what was priced in the quote. Re-verify the values and retry with a fresh quote if necessary.
+</Accordion>
+
+<Accordion title="Transaction blocked by corridor or compliance conditions">
+  The transaction was rejected due to a corridor restriction or a compliance hold. Contact NadaPay support with the transaction ID for details.
+</Accordion>

@@ -1,0 +1,57 @@
+---
+title: 'POST /organization/invoices/:id/send — Send Invoice to Customer'
+sidebarTitle: 'Send'
+description: 'Transition a DRAFT invoice to SENT status and email it to the customer. This action is irreversible — the invoice becomes immutable after sending.'
+---
+
+When you are ready to deliver an invoice to your customer, call this endpoint. NadaPay transitions the invoice from `DRAFT` to `SENT`, dispatches an email to the customer with a link to the invoice payment page, and locks the invoice from further edits. If you need to make changes, do so while the invoice is still in `DRAFT` before calling this endpoint. You can also send automatically at creation time by setting `sendNow: true` on the [Create Invoice](/api-reference/invoices/create) request.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the draft invoice to send.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/invoices/inv_abc123/send \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response confirms the invoice was sent and returns the updated invoice object with `status: "SENT"`.
+
+<ResponseField name="id" type="string">
+  The invoice's unique identifier.
+</ResponseField>
+
+<ResponseField name="invoiceNumber" type="string">
+  The customer-facing invoice number.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The invoice status after sending. Always `SENT` on success.
+</ResponseField>
+
+<ResponseField name="sentAt" type="string">
+  ISO 8601 timestamp of when the invoice was sent.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Invoice sent successfully",
+  "data": {
+    "id": "inv_abc123",
+    "invoiceNumber": "INV-001",
+    "status": "SENT",
+    "sentAt": "2026-04-24T12:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  After this call succeeds, the customer receives an email with a link to `/public/invoices/:number` where they can view and pay the invoice. The invoice can no longer be edited or deleted.
+</Note>

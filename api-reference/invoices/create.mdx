@@ -1,0 +1,172 @@
+---
+title: 'POST /organization/invoices — Create an Invoice'
+sidebarTitle: 'Create'
+description: 'Create a new invoice for a customer. Invoices start as DRAFT by default. Set sendNow to true to transition to SENT and email the customer immediately.'
+---
+
+Invoices are the primary receivables in NadaPay. You create an invoice against an existing customer, specify line items, configure payment methods, and decide whether to send it immediately or hold it in `DRAFT` status for review. Only `DRAFT` invoices can be updated or deleted after creation, so use `sendNow: false` (the default) when you want to review the invoice before sending. Once you set `sendNow: true` or call the `/send` endpoint, the invoice transitions to `SENT` and an email goes out to the customer.
+
+## Request body
+
+<ParamField body="customerId" type="string" required>
+  The ID of an existing customer in your organization. Retrieve this from the [Customers API](/api-reference/customers/create).
+</ParamField>
+
+<ParamField body="number" type="string" required>
+  Your invoice number, e.g. `INV-001`. This is the customer-facing reference displayed on the invoice.
+</ParamField>
+
+<ParamField body="issueDate" type="string" required>
+  The invoice issue date in ISO 8601 format, e.g. `2026-04-24T00:00:00.000Z`.
+</ParamField>
+
+<ParamField body="dueDate" type="string" required>
+  The payment due date in ISO 8601 format. NadaPay uses this to mark invoices as `OVERDUE` automatically.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  The billing currency, e.g. `USD`, `NGN`.
+</ParamField>
+
+<ParamField body="items" type="array" required>
+  An array of line items. Each item must include:
+  - `description` (string) — what you are billing for
+  - `quantity` (number) — number of units
+  - `unitPrice` (number) — price per unit in the invoice currency
+</ParamField>
+
+<ParamField body="settlementAccountId" type="string" required>
+  The wallet ID where collected payments will land. Must be a valid financial account in your organization.
+</ParamField>
+
+<ParamField body="paymentMethods" type="array" required>
+  The accepted payment methods, e.g. `["bank_transfer", "crypto"]`.
+</ParamField>
+
+<ParamField body="taxRate" type="number">
+  Optional tax rate as a percentage, e.g. `8.25` for 8.25%.
+</ParamField>
+
+<ParamField body="taxName" type="string">
+  Label for the tax line on the invoice, e.g. `Sales Tax` or `VAT`.
+</ParamField>
+
+<ParamField body="discountValue" type="number">
+  The discount amount to apply. Interpret as a percentage or fixed amount depending on `discountType`.
+</ParamField>
+
+<ParamField body="discountType" type="string">
+  How to apply the discount. Accepted values: `PERCENTAGE` (reduces total by a percentage) or a fixed-amount type.
+</ParamField>
+
+<ParamField body="allowPartialPayment" type="boolean">
+  When `true`, the customer can pay part of the invoice amount. Defaults to `false`.
+</ParamField>
+
+<ParamField body="notesToClient" type="string">
+  A note visible to the customer on the invoice, e.g. payment instructions or a thank-you message.
+</ParamField>
+
+<ParamField body="internalNotes" type="string">
+  An internal note not shown to the customer — useful for your own records.
+</ParamField>
+
+<ParamField body="sendEmailReminder" type="boolean">
+  When `true`, NadaPay sends an automatic email reminder before the due date.
+</ParamField>
+
+<ParamField body="sendNow" type="boolean">
+  When `true`, the invoice transitions from `DRAFT` to `SENT` immediately and an email is dispatched to the customer. Defaults to `false`.
+</ParamField>
+
+<ParamField body="scheduledAt" type="string">
+  ISO 8601 datetime to schedule the invoice send for a future time. Mutually exclusive with `sendNow: true`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs to store with this invoice.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/invoices \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "customerId": "cus_abc123",
+    "number": "INV-001",
+    "issueDate": "2026-04-24T00:00:00.000Z",
+    "dueDate": "2026-05-24T00:00:00.000Z",
+    "currency": "USD",
+    "items": [
+      {
+        "description": "Web Design Services",
+        "quantity": 2,
+        "unitPrice": 500
+      }
+    ],
+    "taxRate": 8.25,
+    "taxName": "Sales Tax",
+    "settlementAccountId": "acc-uuid-123",
+    "paymentMethods": ["bank_transfer", "crypto"],
+    "sendNow": false
+  }'
+```
+
+## Response
+
+A `201` response returns the newly created invoice in `DRAFT` status.
+
+<ResponseField name="id" type="string">
+  Unique identifier for the invoice, e.g. `inv_abc123`.
+</ResponseField>
+
+<ResponseField name="invoiceNumber" type="string">
+  The invoice number you provided.
+</ResponseField>
+
+<ResponseField name="customerId" type="string">
+  The customer this invoice is addressed to.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  The total invoice amount in the smallest currency unit.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The invoice currency.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current invoice status. Starts as `DRAFT`.
+</ResponseField>
+
+<ResponseField name="dueDate" type="string">
+  ISO 8601 due date.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Invoice created successfully",
+  "data": {
+    "id": "inv_abc123",
+    "invoiceNumber": "INV-001",
+    "customerId": "cus_abc123",
+    "total": 108250,
+    "currency": "USD",
+    "status": "DRAFT",
+    "dueDate": "2026-05-24T00:00:00.000Z",
+    "createdAt": "2026-04-24T00:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  Best practice: create invoices as `DRAFT` first, review them, then call the `/send` endpoint when ready. Once an invoice moves out of `DRAFT`, it can no longer be updated or deleted.
+</Note>

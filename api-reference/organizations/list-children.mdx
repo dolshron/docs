@@ -1,0 +1,45 @@
+---
+title: 'GET /organizations/children — List Child Organizations'
+sidebarTitle: 'List Children'
+description: 'Retrieve all child organizations registered under your partner account. Use this to build a merchant management dashboard or audit sub-businesses.'
+---
+
+Use this endpoint to retrieve all sub-businesses you have registered under your partner organization. The response gives you a list of child organization profiles you can display in a merchant management interface, iterate over for status checks, or use to drive per-organization reporting. Authentication uses your parent organization's API key.
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organizations/children \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns a list of child organization profiles.
+
+<ResponseField name="data" type="array">
+  Array of child organization objects. Each item typically contains `organizationId`, `businessName`, `businessEmail`, and `status`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "List of child organization profiles.",
+  "data": [
+    {
+      "organizationId": "org-uuid-456",
+      "businessName": "Acme Corp",
+      "businessEmail": "info@acmecorp.com",
+      "status": "ACTIVE",
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "organizationId": "org-uuid-789",
+      "businessName": "Globex Inc",
+      "businessEmail": "ops@globex.com",
+      "status": "ACTIVE",
+      "createdAt": "2026-02-15T00:00:00Z"
+    }
+  ]
+}
+```

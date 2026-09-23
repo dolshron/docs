@@ -1,0 +1,120 @@
+---
+title: 'Get Deposit Instructions to Fund a NadaPay Account'
+sidebarTitle: 'Deposit Instructions'
+description: 'Retrieve exact bank or wallet funding instructions for a NadaPay account and share them with the party initiating the inbound transfer.'
+---
+
+Deposit instructions give you the exact account numbers, routing codes, or wallet addresses a payer needs to send money into a NadaPay-powered wallet. You call the API, receive the full instruction set including a unique reference, and share it with whoever is initiating the transfer. NadaPay uses that reference to match the inbound payment to the correct wallet. Use this guide when a business client, customer, or your own operations team needs funding details before sending money.
+
+## When to Use Deposit Instructions vs. Checkout
+
+| | Deposit Instructions | Checkout |
+|---|---|---|
+| Who initiates the payment | The payer, from their own bank or wallet | The customer, inside your app or a hosted NadaPay page |
+| Best for | B2B wire transfers, ops funding, external wallet transfers | E-commerce, product payments, one-click consumer flows |
+| Reference required | Yes — the payer must include the exact reference | No — matched automatically by session |
+| Frontend work | None | JS SDK integration or Payment Link |
+
+## Prerequisites
+
+Before calling the endpoint, confirm that you have:
+
+1. Your NadaPay API base URL set as `$NADAPAY_BASE_URL` (`https://core.nadapay.io/api/v1`).
+2. Your NadaPay API secret key exported as `YOUR_API_KEY`.
+3. A unique UUID generated for the `x-idempotency-key` header.
+4. The `nadapayCode` for the destination wallet you want to fund (e.g. `WAL-123`).
+5. The source currency, country, and amount for the funding flow.
+6. Any additional `source.details` values required for the payment rail you are using.
+
+<Note>
+  Find the `nadapayCode` for a wallet by calling `GET /organizations/accounts` or the get-account-details endpoint and reading the `nadapayCode` field on the account object.
+</Note>
+
+## Step-by-Step
+
+<Steps>
+
+  <Step title="Fetch Deposit Instructions">
+    Send a `POST` request to the deposit-instructions endpoint. Include the `x-idempotency-key` header with a fresh UUID to prevent duplicate instruction requests on retry.
+
+    ```bash
+    curl --request POST \
+      --url $NADAPAY_BASE_URL/transactions/deposit-instructions \
+      --header 'x-api-key: YOUR_API_KEY' \
+      --header 'Content-Type: application/json' \
+      --header 'x-idempotency-key: 3b6f8e20-1234-4abc-b9de-000000000001' \
+      --data '{
+        "source": {
+          "currency": "USD",
+          "country": "NG",
+          "amount": 100,
+          "details": {}
+        },
+        "destination": {
+          "nadapayCode": "WAL-123"
+        }
+      }'
+    ```
+
+    A successful response returns a full set of funding instructions, including:
+
+    - Account numbers, routing codes, or wallet addresses for the selected rail
+    - A unique `reference` that the payer must include with their transfer
+
+    <Info>
+      If the endpoint returns a `500 Internal Server Error`, check that the destination `nadapayCode` is correct, the source funding details are complete for the selected rail, and the funding configuration you are requesting is supported.
+    </Info>
+  </Step>
+
+  <Step title="Validate the Response">
+    Before sharing any instructions, verify that:
+
+    - The destination account details match the wallet you intend to fund.
+    - The `reference` field is present in the response.
+    - The funding rail and currency match your expectations.
+
+    <Warning>
+      Do not continue if the destination `nadapayCode` is incorrect or the returned instructions do not match the account you intend to fund. Sharing incorrect instructions can result in funds being sent to the wrong account.
+    </Warning>
+  </Step>
+
+  <Step title="Share the Instructions with the Funding Party">
+    Provide the complete instruction set — including the exact `reference` value — to whoever is initiating the inbound transfer. NadaPay uses the reference to match the incoming payment to your wallet.
+
+    <Warning>
+      Deposit instructions are unique per wallet and the `reference` must be included exactly as returned. A missing or incorrect reference will delay crediting and may require manual reconciliation.
+    </Warning>
+
+    Save the returned instruction set in full. If the funding party loses the instructions, call the endpoint again with a new idempotency key to regenerate them.
+  </Step>
+
+</Steps>
+
+## Do Not Continue If
+
+- The destination `nadapayCode` is incorrect.
+- The returned funding instructions do not match the account you intend to fund.
+- The required funding details for the selected rail are incomplete.
+- The requested funding configuration is not supported for the source currency and country combination.
+
+## What Success Looks Like
+
+- You receive a full set of funding instructions from the API.
+- The returned `reference` is saved and shared with the funding party.
+- The destination account details match the wallet you intend to fund.
+- The funding party includes the exact `reference` when they initiate the transfer.
+
+## Common Failure Reasons
+
+| Failure | Resolution |
+|---|---|
+| Incorrect `nadapayCode` | Look up the correct code via `GET /organizations/accounts` |
+| Incomplete `source.details` | Check the rail-specific documentation for required fields |
+| Unsupported funding configuration | Verify the currency and country combination is available in your markets |
+| `500` error on retry | Generate a new idempotency key and retry once |
+
+## Next Steps
+
+- Wait for a webhook event confirming the deposit landed — do not assume success from the instruction-fetch call alone.
+- Review the [Collection Overview](/docs/collection-overview) to understand how deposit instructions compare to Checkout and Payment Links.
+- Check [Transaction Limits](/docs/generate-quote) before requesting instructions for large transfers.

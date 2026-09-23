@@ -1,0 +1,76 @@
+---
+title: 'GET /organization/invoices — List All Invoices'
+sidebarTitle: 'List'
+description: 'Retrieve a paginated list of invoices. Filter by status or customer ID to narrow results for dashboards and reconciliation workflows.'
+---
+
+Use this endpoint to retrieve all invoices created under your organization. You can filter by `status` to see only outstanding or overdue invoices, or by `customerId` to pull all invoices for a specific customer. Results are paginated and default to the most recently created invoices first.
+
+## Query parameters
+
+<ParamField query="page" type="number" default="1">
+  The page number to retrieve.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  The maximum number of invoices to return per page.
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  The field to sort results by.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort direction. Accepted values: `asc`, `desc`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by invoice status. Accepted values: `DRAFT`, `SENT`, `PAID`, `OVERDUE`, `CANCELLED`.
+</ParamField>
+
+<ParamField query="customerId" type="string">
+  Filter invoices for a specific customer by their ID.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/invoices?page=1&limit=10&status=SENT&sortOrder=desc' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns a paginated list of invoice objects.
+
+<ResponseField name="data" type="array">
+  Array of invoice records. Each item contains `id`, `invoiceNumber`, `customerId`, `total`, `currency`, `status`, `dueDate`, and `createdAt`.
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  Pagination metadata including `page`, `limit`, and `total`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Invoices retrieved successfully",
+  "data": [
+    {
+      "id": "inv_abc123",
+      "invoiceNumber": "INV-001",
+      "customerId": "cus_abc123",
+      "total": 108250,
+      "currency": "USD",
+      "status": "SENT",
+      "dueDate": "2026-05-24T00:00:00.000Z",
+      "createdAt": "2026-04-24T00:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1
+  }
+}
+```

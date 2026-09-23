@@ -1,0 +1,58 @@
+---
+title: 'GET /organizations/accounts/:id — Get Organization Account'
+sidebarTitle: 'Get Account'
+description: 'Fetch full details for a single financial account by ID, including account name, currency, wallet status, and current balance information.'
+---
+
+Each currency wallet your organization holds is represented as a financial account with a unique ID. Use this endpoint to fetch the full details of a specific account — its currency, name, status, and balance. This is useful when you need to verify account state before executing a transaction or when displaying account details in a dashboard.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the financial account (wallet) to retrieve.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organizations/accounts/acc-uuid-123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns detailed account information.
+
+<ResponseField name="id" type="string">
+  The account's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  A human-readable label for the account, e.g. `Main Wallet`.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The account's currency code, e.g. `USD`, `NGN`, `USDC`.
+</ResponseField>
+
+<ResponseField name="walletStatus" type="string">
+  The current status of the wallet: `ACTIVE` or `INACTIVE`.
+</ResponseField>
+
+<ResponseField name="balance" type="number">
+  The current account balance in micro-units.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Detailed account information.",
+  "data": {
+    "id": "acc-uuid-123",
+    "name": "Main Wallet",
+    "currency": "USD",
+    "walletStatus": "ACTIVE",
+    "balance": 500000000
+  }
+}
+```

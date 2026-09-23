@@ -1,0 +1,200 @@
+---
+title: 'POST /transactions/batch-execute — Run Batch Payouts'
+sidebarTitle: 'Batch Execute'
+description: 'Submit multiple payout transactions in a single request. Every item in the batch must have its own pre-generated quoteId before the batch is submitted.'
+---
+
+The batch execute endpoint lets you submit multiple payouts in one API call, which is useful for payroll runs, bulk disbursements, or any scenario where you need to fan out funds to many recipients at once. Each item in the `payouts` array must have its own pre-generated `quoteId` — you cannot generate a single quote for the whole batch. The batch is accepted and queued for background execution, so the `202 Accepted` response does not mean every individual payout has settled; monitor results via webhook events.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/batch-execute
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID for the batch request as a whole. |
+
+## Request Parameters
+
+<ParamField body="source" type="object" required>
+  The shared source account details that apply to all payouts in the batch.
+
+  <Expandable title="source properties">
+    <ParamField body="accountId" type="string" required>
+      The NadaPay account ID to debit for all payouts in this batch.
+    </ParamField>
+
+    <ParamField body="nadapayCode" type="string">
+      The NadaPay wallet code for the source account.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  The shared purpose of all transactions in the batch. Must be one of:
+
+  `gift` · `bills` · `groceries` · `travel` · `health` · `entertainment` · `housing` · `school-fees` · `Conversion` · `other`
+</ParamField>
+
+<ParamField body="reasonDescription" type="string">
+  Additional context for the reason, required when `reason` is `"other"`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs to attach to the batch request.
+</ParamField>
+
+<ParamField body="payouts" type="array" required>
+  An array of individual payout objects. Each item must include its own `quoteId` and destination details.
+
+  <Expandable title="payout object properties">
+    <ParamField body="quoteId" type="string" required>
+      The unique `quoteId` for this specific payout, obtained from a prior call to [Generate Quote](/api-reference/transactions/generate-quote).
+    </ParamField>
+
+    <ParamField body="source" type="object" required>
+      Source details for this individual payout, including the amount to debit.
+
+      <Expandable title="payout source properties">
+        <ParamField body="accountId" type="string" required>
+          The NadaPay account ID to debit for this payout.
+        </ParamField>
+
+        <ParamField body="amount" type="number" required>
+          The amount to debit in the source currency's smallest unit. Must match the quoted amount.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="destination" type="object" required>
+      Destination details for this individual payout.
+
+      <Expandable title="payout destination properties">
+        <ParamField body="beneficiaryAccountId" type="string">
+          The NadaPay beneficiary account ID for this recipient.
+        </ParamField>
+
+        <ParamField body="accountId" type="string">
+          The NadaPay internal account ID for the destination.
+        </ParamField>
+
+        <ParamField body="nadapayCode" type="string">
+          The NadaPay wallet code of the destination account.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/batch-execute \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "source": {
+      "accountId": "acct_01HXXXXXXXXXXXXXXXXXX",
+      "nadapayCode": "WAL-123"
+    },
+    "reason": "gift",
+    "metadata": {
+      "batchRef": "PAYROLL-2024-09"
+    },
+    "payouts": [
+      {
+        "quoteId": "qt_01HAAAAAAAAAAAAAAAAAA",
+        "source": {
+          "accountId": "acct_01HXXXXXXXXXXXXXXXXXX",
+          "amount": 500000
+        },
+        "destination": {
+          "beneficiaryAccountId": "bene_01HAAAAAAAAAAAAAAAAAA"
+        }
+      },
+      {
+        "quoteId": "qt_01HBBBBBBBBBBBBBBBBBB",
+        "source": {
+          "accountId": "acct_01HXXXXXXXXXXXXXXXXXX",
+          "amount": 750000
+        },
+        "destination": {
+          "beneficiaryAccountId": "bene_01HBBBBBBBBBBBBBBBBBB"
+        }
+      }
+    ]
+  }'
+```
+
+## Response Fields
+
+A `202 Accepted` response means the batch was successfully queued for background execution.
+
+<ResponseField name="batchId" type="string">
+  The unique identifier for this batch submission. Use it to track the overall batch status.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The initial batch status. Typically `"QUEUED"` immediately after submission.
+</ResponseField>
+
+<ResponseField name="results" type="array">
+  An array of objects describing the initial processing outcome for each payout in the batch.
+
+  <Expandable title="result object properties">
+    <ResponseField name="quoteId" type="string">
+      The `quoteId` for this individual payout, echoed back.
+    </ResponseField>
+
+    <ResponseField name="transactionId" type="string">
+      The NadaPay transaction ID assigned to this payout. May be `null` if the item failed immediately.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      The initial status of this individual payout. One of `"QUEUED"`, `"FAILED"`.
+    </ResponseField>
+
+    <ResponseField name="error" type="string">
+      An error message if this specific payout failed validation. `null` for queued items.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "batchId": "batch_01HXXXXXXXXXXXXXXXXXX",
+  "status": "QUEUED",
+  "results": [
+    {
+      "quoteId": "qt_01HAAAAAAAAAAAAAAAAAA",
+      "transactionId": "txn_01HAAAAAAAAAAAAAAAAAA",
+      "status": "QUEUED",
+      "error": null
+    },
+    {
+      "quoteId": "qt_01HBBBBBBBBBBBBBBBBBB",
+      "transactionId": "txn_01HBBBBBBBBBBBBBBBBBB",
+      "status": "QUEUED",
+      "error": null
+    }
+  ]
+}
+```
+
+<Note>
+  **Each item needs its own pre-generated quote.** You must call [Generate Quote](/api-reference/transactions/generate-quote) individually for every recipient before building your batch payload. A single quote cannot cover multiple payouts.
+</Note>
+
+## What to Call Next
+
+- Monitor the status of individual transactions via webhook events using the `transactionId` values returned in `results`.
+- [Generate Quote](/api-reference/transactions/generate-quote) — generate the individual quotes needed before building a batch.

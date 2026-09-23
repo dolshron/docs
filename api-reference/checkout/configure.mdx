@@ -1,0 +1,160 @@
+---
+title: 'POST /organization/checkout — Configure Checkout Widget'
+sidebarTitle: 'Configure'
+description: 'Create a checkout widget configuration with branding, accepted payment methods, currencies, redirect URLs, and settlement account settings.'
+---
+
+A checkout configuration is the reusable blueprint that controls how your hosted checkout widget looks and behaves. You define your branding, which payment methods and currencies to accept, which domains are permitted to embed the widget, and where to redirect the customer after payment. Once you create a configuration, you reference its `id` whenever you instantiate a checkout session. You can create multiple configurations for different products, storefronts, or payment flows — and update them without rebuilding your integration.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/organization/checkout/configure
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  A human-readable name for this configuration — used in your dashboard to distinguish between configurations. Example: `"Web Checkout Widget"`.
+</ParamField>
+
+<ParamField body="settlementAccountId" type="string" required>
+  The ID of the NadaPay wallet where collected funds will settle after a successful payment.
+</ParamField>
+
+<ParamField body="checkoutType" type="string" required default="CUSTOM">
+  Determines whether the checkout bills against a specific product or a custom amount. Allowed values: `PRODUCT`, `CUSTOM`.
+</ParamField>
+
+<ParamField body="productIds" type="array">
+  An array of product IDs this checkout configuration sells. Required when `checkoutType` is `PRODUCT`. Each element is a string product ID.
+</ParamField>
+
+<ParamField body="allowedDomains" type="array">
+  An array of fully-qualified origin URLs (e.g. `["https://yourapp.com"]`) permitted to embed this checkout widget. NadaPay validates the browser's `Origin` header against this list. Leave empty to allow all origins.
+</ParamField>
+
+<ParamField body="branding" type="object">
+  Optional branding overrides for the checkout widget UI. Pass logo URLs, primary colors, and other visual settings here. The exact shape of this object depends on the widget version — refer to the checkout widget integration guide for the full schema.
+</ParamField>
+
+<ParamField body="returnUrl" type="string">
+  URL to redirect the customer to if they cancel or leave the checkout flow without completing payment.
+</ParamField>
+
+<ParamField body="successUrl" type="string">
+  URL to redirect the customer to after a successful payment.
+</ParamField>
+
+<ParamField body="enabledFiatCurrencies" type="array">
+  Array of ISO 4217 currency codes for fiat payment options to display in the widget. Example: `["USD", "NGN"]`.
+</ParamField>
+
+<ParamField body="enabledCryptoCurrencies" type="array">
+  Array of cryptocurrency ticker symbols to accept. Example: `["USDC", "SOL"]`.
+</ParamField>
+
+<ParamField body="enabledPaymentMethods" type="array">
+  Array of payment method identifiers to display in the widget. Allowed values: `crypto`, `nadapay_wallet`, `card`, `bank_transfer`. Read this array at render time — don't hardcode payment options in your UI.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/checkout/configure \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "name": "Web Checkout Widget",
+    "settlementAccountId": "wallet-uuid-here",
+    "checkoutType": "CUSTOM",
+    "allowedDomains": ["https://yourapp.com"],
+    "branding": {},
+    "returnUrl": "https://yourapp.com/checkout/return",
+    "successUrl": "https://yourapp.com/checkout/success",
+    "enabledFiatCurrencies": ["USD", "NGN"],
+    "enabledCryptoCurrencies": ["USDC", "SOL"],
+    "enabledPaymentMethods": ["crypto", "bank_transfer"]
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the configuration is saved successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Checkout configured successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The saved checkout configuration object.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      The unique configuration ID. Use this `id` when instantiating checkout sessions or when archiving this configuration.
+    </ResponseField>
+
+    <ResponseField name="brandColor" type="string">
+      The primary brand color applied to the checkout widget, as a hex string (e.g. `"#7C3AED"`).
+    </ResponseField>
+
+    <ResponseField name="logoUrl" type="string">
+      URL of the logo displayed in the checkout widget header.
+    </ResponseField>
+
+    <ResponseField name="redirectUrl" type="string">
+      The post-payment redirect URL saved in this configuration.
+    </ResponseField>
+
+    <ResponseField name="allowedChannels" type="array">
+      The payment methods enabled for this configuration.
+    </ResponseField>
+
+    <ResponseField name="environment" type="string">
+      `"live"` or `"sandbox"`.
+    </ResponseField>
+
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of the most recent update to this configuration.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Checkout configured successfully",
+  "data": {
+    "id": "chk_01hw3x7k2r4p5q6m8n9v",
+    "brandColor": "#7C3AED",
+    "logoUrl": "https://cdn.example.com/logo.png",
+    "redirectUrl": "https://yourapp.com/checkout/success",
+    "allowedChannels": ["crypto", "bank_transfer"],
+    "environment": "live",
+    "updatedAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  When you embed the checkout widget on a browser, make sure the page sends a valid `Origin` header matching one of your `allowedDomains` entries. If `allowedDomains` is empty, all origins are permitted — tighten this in production to prevent unauthorized embedding.
+</Note>

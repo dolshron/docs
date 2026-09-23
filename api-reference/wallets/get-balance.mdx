@@ -1,0 +1,80 @@
+---
+title: "GET /organizations/accounts/balance — Get Currency Balance"
+sidebarTitle: "Get Balance"
+description: "Retrieve the current balance for a specific currency wallet. Ideal for a quick balance check before generating a quote or executing a transaction."
+---
+
+Use this endpoint when you already know the currency you care about and just need the number — for example, to verify your organization has sufficient USD before generating a payout quote. This is a lighter call than List Financial Accounts, which returns all wallets at once. Pass the currency code as a path parameter and you get back the balance details for that wallet immediately.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/organizations/balance/{currency}`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/balance/USD' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="currency" type="string" required>
+  The ISO 4217 currency code of the wallet whose balance you want to retrieve. For example: `USD`, `NGN`, `KES`, `USDC`, `GHS`.
+</ParamField>
+
+## Additional examples
+
+**Check NGN balance**
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/balance/NGN' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+**Check USDC balance**
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/balance/USDC' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A successful `200 OK` response returns the balance details for the requested currency wallet.
+
+```json
+{
+  "currency": "USD",
+  "balance": "10000.00",
+  "availableBalance": "9500.00",
+  "walletStatus": "ACTIVE"
+}
+```
+
+<ResponseField name="currency" type="string">
+  The currency code you requested.
+</ResponseField>
+
+<ResponseField name="balance" type="string">
+  Total balance held in the wallet, as a decimal string.
+</ResponseField>
+
+<ResponseField name="availableBalance" type="string">
+  The portion of the balance available for outgoing transactions. This may differ from `balance` if any amounts are reserved for pending transactions.
+</ResponseField>
+
+<ResponseField name="walletStatus" type="string">
+  Current operational status of this wallet, e.g. `ACTIVE`, `SUSPENDED`.
+</ResponseField>
+
+## When to use this vs. List Financial Accounts
+
+Use this endpoint when you know which currency you need and want a single, direct answer — for example, checking sufficient balance before a quote. Use List Financial Accounts when you need to render all wallets at once, such as a multi-currency balance overview in a dashboard.

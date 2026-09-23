@@ -1,0 +1,194 @@
+---
+title: 'Create Reusable Products for Invoices and Payment Links'
+sidebarTitle: 'Products'
+description: 'Define reusable billable items with pricing, billing period, and currency, then attach them to invoices and payment links across your organization.'
+---
+
+Products are reusable billable items that you define once and attach to invoices or payment links whenever you need to bill for them. Instead of specifying a name, price, and currency on every invoice or payment link individually, you create a product record that holds all of that metadata and then reference it by ID. Products support both one-time and recurring billing models, and you can archive them to preserve historical records without deleting past transaction data.
+
+## Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/organization/products` | Create a product |
+| `GET` | `/organization/products` | List all products |
+| `GET` | `/organization/products/:id` | Fetch a single product |
+| `PATCH` | `/organization/products/:id` | Update a product |
+| `DELETE` | `/organization/products/:id` | Archive a product |
+
+---
+
+## Create a product
+
+### Endpoint
+
+```
+POST /organization/products
+```
+
+### Request
+
+```bash
+curl --request POST \
+  --url $baseUrl/organization/products \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Premium Plan",
+    "description": "Access to all premium features.",
+    "sku": "PREM-001",
+    "type": "RECURRING",
+    "price": 120,
+    "currency": "USD",
+    "billingPeriod": "monthly",
+    "status": "ACTIVE"
+  }'
+```
+
+### Request fields
+
+<ParamField body="name" type="string" required>
+  The product name displayed on invoices and payment links.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  The billing model for this product. Use `RECURRING` for subscription-style products or `ONE_TIME` for single-charge products.
+</ParamField>
+
+<ParamField body="price" type="number" required>
+  The product price in whole units of the specified currency (e.g. `120` for $120.00 or ₦120.00). NadaPay converts this to the appropriate minor unit representation internally.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  The ISO 4217 currency code for this product (e.g. `USD`, `NGN`).
+</ParamField>
+
+<ParamField body="billingPeriod" type="string">
+  Required when `type` is `RECURRING`. Specifies the billing frequency, e.g. `monthly` or `annually`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  A human-readable description of the product, displayed to customers on invoices and checkout pages.
+</ParamField>
+
+<ParamField body="sku" type="string">
+  Your internal stock-keeping unit identifier. Useful for reconciliation with your own inventory or billing systems.
+</ParamField>
+
+<ParamField body="status" type="string">
+  The initial status of the product. Accepts `ACTIVE`, `ARCHIVED`, or `DRAFT`. Defaults to `ACTIVE` if omitted.
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Product created successfully",
+  "data": {
+    "id": "prod_01hw3x7k2r4p5q6m8n9v",
+    "name": "Premium Plan",
+    "description": "Access to all premium features.",
+    "currency": "USD",
+    "price": 120,
+    "isActive": true,
+    "environment": "live",
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+## List products
+
+Retrieve all products in your organization.
+
+### Request
+
+```bash
+curl --request GET \
+  --url $baseUrl/organization/products \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+---
+
+## Fetch a product
+
+Retrieve a single product by ID.
+
+### Request
+
+```bash
+curl --request GET \
+  --url $baseUrl/organization/products/{id} \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+---
+
+## Update a product
+
+Update one or more fields on an existing product.
+
+### Request
+
+```bash
+curl --request PATCH \
+  --url $baseUrl/organization/products/{id} \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Premium Plan (Updated)",
+    "price": 150
+  }'
+```
+
+---
+
+## Archive a product
+
+Remove a product from active use. Archiving preserves all historical invoice and transaction data that references the product.
+
+### Request
+
+```bash
+curl --request DELETE \
+  --url $baseUrl/organization/products/{id} \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+<Warning>
+  **Archive, don't delete.** Once a product has been referenced by an invoice or payment link, archiving it preserves all historical records. Deleting a product that has active usage can break your transaction history. Set the product's `status` to `ARCHIVED` via the update endpoint if you want to retire it without losing records.
+</Warning>
+
+---
+
+## Best practices
+
+<Accordion title="Keep product identifiers stable">
+  Once a product has been referenced by an invoice or payment link, avoid changing its `id` or fundamental billing properties. Update the name or description freely, but treat pricing and currency changes carefully to avoid discrepancies in historical records.
+</Accordion>
+
+<Accordion title="Use SKUs for reconciliation">
+  If your internal systems use their own product or SKU identifiers, populate the `sku` field at creation time. This makes it straightforward to cross-reference NadaPay transactions with your own billing or inventory systems.
+</Accordion>
+
+<Accordion title="Use products as the source of truth for recurring billing">
+  For subscription products, keep the `billingPeriod` and `price` on the product record accurate. Payment links and invoices that reference a recurring product inherit those values and reflect them to customers at checkout.
+</Accordion>
+
+## Next steps
+
+Attach products to payment links or invoices to start collecting payments:
+
+<CardGroup cols={2}>
+  <Card title="Payment Links" icon="link" href="/docs/payment-links">
+    Attach a product to a payment link using `checkoutType: PRODUCT`.
+  </Card>
+  <Card title="Invoices" icon="file-invoice" href="/docs/invoices">
+    Add line items referencing your product to an invoice.
+  </Card>
+</CardGroup>

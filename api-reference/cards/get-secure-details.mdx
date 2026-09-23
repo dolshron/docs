@@ -1,0 +1,88 @@
+---
+title: 'GET /organization/cards/:id/details — Get Full Card Credentials'
+sidebarTitle: 'Secure Details'
+description: 'Retrieve the full PAN, CVV, and expiry for a virtual card. Server-side only — never log the response or return it to browser or mobile clients.'
+---
+
+This endpoint returns the complete card credentials for a specific virtual card, including the full 16-digit PAN, the CVV, and the expiry date. You should only call it when you have a specific, controlled need for the raw card number — for example, to display it once inside a PCI-compliant iframe so the cardholder can copy it, or to pass credentials directly to a partner vault. For all other purposes — listing cards, checking status, building dashboards — use [Get Card](/api-reference/cards/get) instead, which never exposes sensitive data.
+
+<Warning>
+  **Server-side only.** Never call this endpoint from a browser, mobile app, or any client that runs outside your secure backend. Never log the response body — doing so risks persisting raw PAN and CVV data outside a controlled environment. Never return the full PAN or CVV directly to a frontend client; if your UI must display the card number, proxy it through a PCI-compliant iframe or tokenisation layer that you control.
+</Warning>
+
+## Endpoint
+
+```
+GET https://core.nadapay.io/api/v1/organization/cards/:id/details
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the card whose full credentials you want to retrieve. This is the `id` returned when you [issued the card](/api-reference/cards/issue).
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organization/cards/card_01hw3x7k2r4p5q6m8n9v/details \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the credentials are returned successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status, e.g. `"Secure details retrieved"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The full card credentials object.
+
+  <Expandable title="data fields">
+    <ResponseField name="pan" type="string">
+      The full 16-digit Primary Account Number. Handle with PCI DSS controls — do not store, log, or transmit outside a secure environment.
+    </ResponseField>
+
+    <ResponseField name="cvv" type="string">
+      The 3-digit card verification value. Treat with the same PCI controls as the PAN.
+    </ResponseField>
+
+    <ResponseField name="expiry" type="string">
+      Card expiry in `MM/YY` format.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Secure details retrieved",
+  "data": {
+    "pan": "4000000000004242",
+    "cvv": "123",
+    "expiry": "07/27"
+  }
+}
+```
+
+<Note>
+  Only call this endpoint when you have an explicit, auditable reason to access the raw card credentials. For display-only use cases such as status checks, card listings, or transaction history, use [Get Card](/api-reference/cards/get) — it is safe to log and render without PCI controls.
+</Note>

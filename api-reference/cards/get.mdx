@@ -1,0 +1,99 @@
+---
+title: 'GET /organization/cards/:id — Get Card Details'
+sidebarTitle: 'Get Card'
+description: 'Fetch safe display metadata for a single virtual card by ID — returns status, last4, and linked wallet code, but never exposes PAN or CVV.'
+---
+
+Use this endpoint to retrieve metadata for a specific virtual card. The response includes the card's identifier, last four digits, current status, and the wallet it is linked to — everything you need to render a card in a UI or check its state programmatically. No sensitive card data (PAN, CVV, expiry) is ever returned by this endpoint, making it safe to call from server-rendered pages, admin dashboards, or any service that doesn't require strict PCI isolation. For full card credentials, see [Get Secure Card Details](/api-reference/cards/get-secure-details).
+
+## Endpoint
+
+```
+GET https://core.nadapay.io/api/v1/organization/cards/:id
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the card you want to retrieve. This is the `id` value returned when you [issued the card](/api-reference/cards/issue).
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organization/cards/card_01hw3x7k2r4p5q6m8n9v \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the card is found and returned successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status, e.g. `"Card metadata retrieved"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The card metadata object.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      Unique card identifier.
+    </ResponseField>
+
+    <ResponseField name="last4" type="string">
+      The last four digits of the card number. Safe to display directly in your UI.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Current card status: `"active"` or `"inactive"`. A card must be `active` before it can process transactions.
+    </ResponseField>
+
+    <ResponseField name="nadapayCode" type="string">
+      The NadaPay wallet code this card is currently linked to.
+    </ResponseField>
+
+    <ResponseField name="environment" type="string">
+      `"live"` or `"sandbox"`.
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of when this card was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Card metadata retrieved",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "last4": "4242",
+    "status": "active",
+    "nadapayCode": "NP-0001",
+    "environment": "live",
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  This endpoint is purpose-built for display use cases. It is safe to log and to render in customer-facing interfaces. If you need the full PAN and CVV, use [Get Secure Card Details](/api-reference/cards/get-secure-details) — but only from a secure, server-side context.
+</Note>

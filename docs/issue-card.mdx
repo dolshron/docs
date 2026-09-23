@@ -1,0 +1,92 @@
+---
+title: 'Issue a New Corporate Virtual Card in NadaPay'
+sidebarTitle: 'Issue Card'
+description: 'Create a corporate virtual card linked to a NadaPay wallet by posting a nadapayCode and an optional spending limit to the cards endpoint.'
+---
+
+Issuing a card creates a new corporate virtual card and ties it to an existing NadaPay wallet identified by its `nadapayCode`. The card is created immediately but starts in `inactive` status — it cannot be used for any transactions until you set a PIN. After you issue a card, proceed directly to the Set Card PIN step to activate it.
+
+## Endpoint
+
+```
+POST /organization/cards
+```
+
+## Request
+
+```bash
+curl --request POST \
+  --url $baseUrl/organization/cards \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "nadapayCode": "NP-0001",
+    "limit": 500000
+  }'
+```
+
+### Request fields
+
+<ParamField body="nadapayCode" type="string" required>
+  The NadaPay wallet identifier this card is tied to. All card transactions will debit this wallet. You can reassign the card to a different wallet later using the Switch Account endpoint.
+</ParamField>
+
+<ParamField body="limit" type="number">
+  Optional spending limit for the card, expressed in cents. For example, `500000` represents $5,000.00. Omit this field to issue a card with no explicit limit.
+</ParamField>
+
+## Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Card issued successfully",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "last4": "4242",
+    "status": "inactive",
+    "nadapayCode": "NP-0001",
+    "environment": "live",
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The unique identifier for the card. Use this in all subsequent card endpoints.
+</ResponseField>
+
+<ResponseField name="last4" type="string">
+  The last four digits of the card number. Safe to display in dashboards and customer-facing UIs.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current card status. Always `inactive` on a freshly issued card — the card cannot be used until you set a PIN.
+</ResponseField>
+
+<ResponseField name="nadapayCode" type="string">
+  The wallet identifier this card is linked to.
+</ResponseField>
+
+<ResponseField name="environment" type="string">
+  Either `live` or `sandbox`, determined by the API key used to issue the card.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the card was created.
+</ResponseField>
+
+<Note>
+  A newly issued card always starts with `status: "inactive"`. The card is not usable for any transactions until you call the Set Card PIN endpoint, which moves the status to `active`.
+</Note>
+
+## Next step
+
+Set a PIN to activate the card:
+
+<Card title="Set Card PIN" icon="lock" href="/docs/manage-cards#set-a-pin">
+  Set the 4-digit PIN to activate the card and allow it to process transactions.
+</Card>

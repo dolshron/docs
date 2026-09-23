@@ -1,0 +1,37 @@
+---
+title: 'DELETE /organization/products/:id — Delete a Product'
+sidebarTitle: 'Delete'
+description: 'Archive a product by ID. Products with historical usage are archived rather than permanently deleted to preserve transaction records.'
+---
+
+Calling this endpoint archives the product rather than permanently removing it from the database. This design choice is intentional — once a product has been referenced by an invoice or payment link, destroying it would corrupt historical records. After archiving, the product no longer appears as active in your catalogue but its data is preserved for reconciliation purposes. If you want to re-activate an archived product, use the [Update Product](/api-reference/products/update) endpoint to set `status: "ACTIVE"`.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the product to archive.
+</ParamField>
+
+```bash
+curl --request DELETE \
+  --url https://core.nadapay.io/api/v1/organization/products/prod_01hw3x7k2r4p5q6m8n9v \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response confirms the product was archived.
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Product archived successfully"
+}
+```
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `404` | No product found with the given `id`. |

@@ -1,0 +1,102 @@
+---
+title: 'Quickstart: Send Your First NadaPay API Request Fast'
+sidebarTitle: 'Quickstart'
+description: 'Get your API key, set the base URL, and make your first authenticated NadaPay API call to fetch your financial accounts in under five minutes.'
+---
+
+The fastest way to verify your NadaPay integration is working is to fetch your organization's financial accounts. This call requires only your API key and returns a list of the wallets your organization holds. Complete the steps below and you will have a working, authenticated API call you can build from.
+
+<Steps>
+
+  <Step title="Get Your API Key">
+    Log in to the NadaPay dashboard and navigate to **Settings → API Keys**. Copy your sandbox secret key — it starts with `np_test_`.
+
+    <Note>
+      Use `np_test_` keys while you are building and testing. Switch to an `np_live_` key only when you are ready to go live with real transactions.
+    </Note>
+
+    Store the key in an environment variable so it never appears in your source code:
+
+    ```bash
+    export NADAPAY_API_KEY="np_test_xxxxxxxxxxxxxxxxxxxx"
+    ```
+  </Step>
+
+  <Step title="Set the Base URL">
+    All NadaPay API requests share a single base URL. Set it as an environment variable alongside your key:
+
+    ```bash
+    export NADAPAY_BASE_URL="https://core.nadapay.io/api/v1"
+    ```
+
+    Every endpoint in these docs is relative to this base URL. For example, `GET /organizations/accounts` means `GET https://core.nadapay.io/api/v1/organizations/accounts`.
+  </Step>
+
+  <Step title="Fetch Your Financial Accounts">
+    Run the following `curl` command to list all wallets belonging to your organization. This is a read-only `GET` request — it does not create anything or move any money.
+
+    ```bash
+    curl --request GET \
+      --url "$NADAPAY_BASE_URL/organizations/accounts" \
+      --header "x-api-key: $NADAPAY_API_KEY"
+    ```
+
+    Pass the `x-api-key` header on every request. The API does not accept the key as a query parameter.
+  </Step>
+
+  <Step title="Read the Response">
+    A successful response returns an array of account objects. Each account represents one currency wallet in your organization.
+
+    ```json
+    {
+      "success": true,
+      "statusCode": 200,
+      "message": "Accounts retrieved successfully",
+      "data": [
+        {
+          "id": "acct_01hw3x7k2r4p5q6m8n9v",
+          "currency": "USD",
+          "balance": 10000,
+          "nadapayCode": "WAL-001",
+          "environment": "sandbox",
+          "createdAt": "2024-07-01T10:00:00.000Z"
+        },
+        {
+          "id": "acct_02hw3x7k2r4p5q6m8n0w",
+          "currency": "NGN",
+          "balance": 500000,
+          "nadapayCode": "WAL-002",
+          "environment": "sandbox",
+          "createdAt": "2024-07-01T10:00:00.000Z"
+        }
+      ]
+    }
+    ```
+
+    Note the `nadapayCode` on each account — you will use this value when fetching deposit instructions for inbound funding.
+
+    <Tip>
+      If you receive a `401 Unauthorized` response, double-check that the `x-api-key` header is present and that the key matches the environment you are calling (sandbox keys only work in sandbox).
+    </Tip>
+  </Step>
+
+</Steps>
+
+## What You Just Did
+
+You made an authenticated GET request to the NadaPay API and received a structured JSON response listing your organization's wallets. From here you can:
+
+- Accept inbound payments through [Checkout](/docs/collection-overview) or [Deposit Instructions](/docs/deposit-instructions)
+- Send outbound payments through the [Payouts API](/docs/payout-overview)
+- Issue and manage [Virtual Cards](/docs/card-overview)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Collection Overview" icon="circle-dollar-to-slot" href="/docs/collection-overview">
+    Understand when to use Checkout, Payment Links, or Deposit Instructions for inbound payments.
+  </Card>
+  <Card title="Payouts Overview" icon="paper-plane" href="/docs/payout-overview">
+    Learn how to register beneficiaries, generate quotes, and execute payouts.
+  </Card>
+</CardGroup>

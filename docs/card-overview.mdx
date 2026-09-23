@@ -1,0 +1,51 @@
+---
+title: 'Issue and Manage NadaPay Virtual Cards'
+sidebarTitle: 'Overview'
+description: 'Issue corporate virtual cards tied to NadaPay wallets, manage their lifecycle from issuance to activation, and secure sensitive card data correctly.'
+---
+
+NadaPay virtual cards give your organization a programmable, corporate-grade spending instrument linked directly to a NadaPay wallet via a `nadapayCode`. Each card moves through a defined lifecycle — from initial issuance to PIN activation — and exposes two distinct retrieval endpoints depending on how sensitive the data is. Understanding that distinction is essential before you start building.
+
+## Card lifecycle
+
+A card begins in `inactive` status the moment you issue it. It cannot be used for any transactions until you set a PIN, which moves its status to `active`. After activation, you can optionally reassign the card to a different wallet at any time using the Switch Account endpoint — the card number, PIN, and status all remain unchanged.
+
+<Steps>
+  <Step title="Issue the card">
+    Call `POST /organization/cards` with a `nadapayCode` (wallet identifier) and an optional spending limit. The card is created with status `inactive`.
+  </Step>
+  <Step title="Set a PIN">
+    Call `POST /organization/cards/:id/pin` with a 4-digit numeric PIN. This immediately activates the card and sets its status to `active`.
+  </Step>
+  <Step title="Use the card">
+    The card is now ready for transactions. Use `GET /organization/cards/:id` for safe metadata display in dashboards or customer-facing UIs.
+  </Step>
+  <Step title="Switch account (optional)">
+    Call `PATCH /organization/cards/:id/account` to reassign the card to a different wallet when your business requires it.
+  </Step>
+</Steps>
+
+## Security — read this first
+
+<Warning>
+  **Never expose PAN or CVV to a browser, mobile client, or server log.**
+
+  `GET /organization/cards/:id/details` returns the full PAN and CVV. Call this endpoint **only from a secure backend server** — never from a client-side SDK, a browser, or a mobile app. Do not log the response, do not pass the raw data through any intermediate service that doesn't strictly require it, and do not persist the PAN or CVV in your own systems.
+
+  `GET /organization/cards/:id` is the safe alternative for everything customer-facing, dashboard-displayed, or status-checked. It returns only non-sensitive metadata such as `last4` and `status` — it is safe to render and log freely.
+</Warning>
+
+<Info>
+  PINs must be a 4-digit numeric value. Collect the PIN through a tightly scoped, PCI-aware input on your frontend and send it directly to the Set PIN endpoint — do not store, log, or route it through any service that does not need it.
+</Info>
+
+## Guides in this section
+
+<CardGroup cols={2}>
+  <Card title="Issue Card" icon="credit-card" href="/docs/issue-card">
+    Create a new virtual card and link it to a NadaPay wallet.
+  </Card>
+  <Card title="Manage Cards" icon="list-check" href="/docs/manage-cards">
+    List cards, fetch metadata, retrieve secure details, set a PIN, and switch the linked wallet.
+  </Card>
+</CardGroup>

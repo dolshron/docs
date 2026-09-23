@@ -1,0 +1,110 @@
+---
+title: "PATCH /organizations/accounts/:id/virtual — Upgrade"
+sidebarTitle: "Upgrade Virtual"
+description: "Upgrade a fiat wallet to a virtual bank account so it can receive direct bank transfers from outside the NadaPay network using real bank details."
+---
+
+By default, your NadaPay fiat wallets receive funds through NadaPay's internal transfer network or via deposit instructions. Upgrading a wallet to a virtual account provisions it with a real bank account number and bank name, allowing anyone — including parties outside the NadaPay network — to fund your wallet via a standard bank transfer. You only need to call this once per currency; after the upgrade, the virtual account details are permanently attached to that wallet and available via the Get Account Details endpoint.
+
+## Request
+
+**POST** `https://core.nadapay.io/api/v1/organizations/upgrade-virtual-account`
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organizations/upgrade-virtual-account \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "currency": "USD"
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+<ParamField header="x-idempotency-key" type="string" required>
+  A unique UUID to prevent duplicate provisioning requests on retries. Reusing the same key for the same currency is safe — you will receive the already-provisioned account details.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="currency" type="string" required>
+  The ISO 4217 currency code of the fiat wallet you want to upgrade to a virtual bank account, e.g. `USD`, `NGN`, `GBP`. You can only upgrade a wallet that already exists in your organization.
+</ParamField>
+
+## Additional currency examples
+
+**Upgrade NGN wallet**
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organizations/upgrade-virtual-account \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{ "currency": "NGN" }'
+```
+
+**Upgrade GBP wallet**
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organizations/upgrade-virtual-account \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{ "currency": "GBP" }'
+```
+
+## Response
+
+A successful `200 OK` response returns the provisioned virtual account details. Share the `accountNumber` and `bankName` with payers so they can send funds directly to your wallet.
+
+```json
+{
+  "data": {
+    "walletId": "acc-uuid-123",
+    "currency": "USD",
+    "virtualAccount": {
+      "accountNumber": "9900001234",
+      "accountName": "Your Organization Name",
+      "bankName": "NadaPay Virtual Bank",
+      "bankCode": "123",
+      "reference": "Your NadaPay reference"
+    }
+  }
+}
+```
+
+<ResponseField name="data.walletId" type="string">
+  The ID of the financial account that was upgraded.
+</ResponseField>
+
+<ResponseField name="data.currency" type="string">
+  The currency of the upgraded wallet.
+</ResponseField>
+
+<ResponseField name="data.virtualAccount.accountNumber" type="string">
+  The bank account number provisioned for this wallet. Payers send funds to this number to credit your NadaPay wallet.
+</ResponseField>
+
+<ResponseField name="data.virtualAccount.accountName" type="string">
+  The account name on the virtual bank account — typically your organization name.
+</ResponseField>
+
+<ResponseField name="data.virtualAccount.bankName" type="string">
+  Name of the bank where the virtual account is held.
+</ResponseField>
+
+<ResponseField name="data.virtualAccount.bankCode" type="string">
+  Bank routing code for the virtual account.
+</ResponseField>
+
+<ResponseField name="data.virtualAccount.reference" type="string">
+  A reference your payers should include when making a transfer to ensure the funds are correctly credited to your wallet.
+</ResponseField>

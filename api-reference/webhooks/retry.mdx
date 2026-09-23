@@ -1,0 +1,42 @@
+---
+title: 'POST /organization/webhooks/deliveries/:id/retry — Retry Failed Delivery'
+sidebarTitle: 'Retry Delivery'
+description: 'Manually trigger a retry for a failed webhook delivery attempt. Use this when your endpoint was temporarily unavailable and is now back online.'
+---
+
+NadaPay automatically retries failed webhook deliveries with exponential backoff, but sometimes you may want to trigger a manual retry immediately — for example, after fixing a bug in your webhook handler or restoring a temporarily unreachable endpoint. Pass the delivery attempt `id` (from the [Delivery History](/api-reference/webhooks/delivery-history) endpoint) as a path parameter and NadaPay will re-queue the delivery.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the failed delivery attempt to retry. Retrieve this from the [Delivery History](/api-reference/webhooks/delivery-history) endpoint.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/webhooks/deliveries/del_xyz788/retry \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response confirms the retry has been queued.
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Retry queued successfully."
+}
+```
+
+## When to use this
+
+Use manual retry when:
+- Your webhook endpoint was down during the original delivery and the automatic retry window has passed.
+- You pushed a fix to your event handler and need to reprocess a specific delivery.
+- You want to test that a corrected handler processes a particular event correctly.
+
+<Note>
+  NadaPay's automatic retry schedule uses exponential backoff with up to five attempts at 2, 4, 8, 16, and 32 minute intervals. Manual retry triggers a fresh attempt outside this schedule.
+</Note>

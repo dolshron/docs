@@ -1,0 +1,78 @@
+---
+title: 'PATCH /organization/invoices/:id — Update a Draft Invoice'
+sidebarTitle: 'Update'
+description: 'Update fields on a DRAFT invoice. Only invoices in DRAFT status can be modified — sent, paid, or cancelled invoices cannot be changed.'
+---
+
+You can only update an invoice while it is in `DRAFT` status. Once you send an invoice (via `sendNow: true` at creation or the `/send` endpoint), it transitions to `SENT` and becomes immutable. This restriction ensures your customers always see an accurate, unmodified copy of what was sent. Use this endpoint to adjust notes, status transitions within draft, or correct internal records before the invoice goes out.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the draft invoice to update.
+</ParamField>
+
+## Request body
+
+<ParamField body="status" type="string">
+  Update the invoice status. Accepted values: `DRAFT`, `SENT`, `PAID`, `OVERDUE`, `CANCELLED`.
+</ParamField>
+
+<ParamField body="notesToClient" type="string">
+  Updated note visible to the customer on the invoice.
+</ParamField>
+
+<ParamField body="internalNotes" type="string">
+  Updated internal note — not shown to the customer.
+</ParamField>
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organization/invoices/inv_abc123 \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "notesToClient": "Please pay via bank transfer. Reference your invoice number.",
+    "internalNotes": "Follow up if not paid by May 20."
+  }'
+```
+
+## Response
+
+A `200` response returns the updated invoice object.
+
+<ResponseField name="id" type="string">
+  The invoice's unique identifier.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current invoice status after the update.
+</ResponseField>
+
+<ResponseField name="notesToClient" type="string">
+  The updated client-facing notes.
+</ResponseField>
+
+<ResponseField name="internalNotes" type="string">
+  The updated internal notes.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Invoice updated successfully",
+  "data": {
+    "id": "inv_abc123",
+    "invoiceNumber": "INV-001",
+    "status": "DRAFT",
+    "notesToClient": "Please pay via bank transfer. Reference your invoice number.",
+    "internalNotes": "Follow up if not paid by May 20.",
+    "updatedAt": "2026-04-25T09:00:00.000Z"
+  }
+}
+```
+
+<Warning>
+  Attempting to update an invoice that is not in `DRAFT` status will return an error. Use the `/send` endpoint to progress a draft to `SENT`.
+</Warning>

@@ -1,0 +1,72 @@
+---
+title: 'DELETE /organization/checkout/:id — Archive a Checkout Config'
+sidebarTitle: 'Archive Config'
+description: 'Permanently archive a checkout widget configuration by ID. This cannot be undone and immediately disables any active sessions using that config.'
+---
+
+Archiving a checkout configuration permanently disables it. Once archived, any active hosted checkout session that references the configuration's `id` will stop working immediately — customers in the middle of a payment flow will be unable to complete their transaction. Before you archive a configuration, verify that no live integrations or in-progress sessions still depend on it. If you need to temporarily pause a configuration without permanently disabling it, consider keeping it active and stopping new sessions from referencing it instead.
+
+<Warning>
+  **This action cannot be undone.** Archiving immediately disables any active checkout sessions that reference this configuration ID. Confirm that no live customer-facing integrations are still using this configuration before proceeding.
+</Warning>
+
+## Endpoint
+
+```
+DELETE https://core.nadapay.io/api/v1/organization/checkout/:id
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the checkout configuration you want to archive. Use [List Checkout Configurations](/api-reference/checkout/list) to find the correct `id` if you don't have it on hand.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request DELETE \
+  --url https://core.nadapay.io/api/v1/organization/checkout/chk_01hw3x7k2r4p5q6m8n9v \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200 OK` response confirms the configuration has been archived. The `data` field is `null` because there is no updated object to return — the configuration is now disabled.
+
+<ResponseField name="success" type="boolean">
+  `true` when the configuration is archived successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation: `"Configuration archived successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  Always `null` for this endpoint — no object is returned after archiving.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Configuration archived successfully",
+  "data": null
+}
+```
+
+<Note>
+  To find configuration IDs that may be in use, call [List Checkout Configurations](/api-reference/checkout/list) and cross-reference the IDs against your active integrations before archiving.
+</Note>

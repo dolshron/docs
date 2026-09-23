@@ -1,0 +1,116 @@
+---
+title: 'POST /organization/payment-links/:id/share — Share via Email'
+sidebarTitle: 'Share'
+description: 'Send a payment link to one or more email addresses directly from the NadaPay platform, with optional metadata attached to each share event.'
+---
+
+This endpoint lets you send a payment link to one or more recipients via email directly through NadaPay, without needing your own email infrastructure. Every share you send is recorded in the share history, giving you a full audit trail of who received the link and when — useful for customer support, reconciliation, and follow-up workflows. You can attach arbitrary `metadata` to a share event to tie it back to a record in your own system, such as an order ID or customer reference.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/organization/payment-links/:id/share
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the payment link you want to share. Use [List Payment Links](/api-reference/payment-links/list) to find the correct `id`.
+</ParamField>
+
+## Request Body
+
+<ParamField body="emails" type="array" required>
+  An array of email address strings to send the payment link to. You can include one or multiple recipients in a single request. Example: `["customer@example.com", "billing@example.com"]`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Optional key-value object to attach to this share event. Use it to store references that link the share back to your own system — for example, `{ "orderId": "ORD-9876", "customerId": "cust_001" }`. This metadata appears in the share history response.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/payment-links/pl_abc123/share \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "emails": ["customer@example.com"],
+    "metadata": {
+      "orderId": "ORD-9876"
+    }
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the share emails are dispatched successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Payment link shared successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Details of the share event that was created.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      Unique identifier for this share event. Appears in the share history.
+    </ResponseField>
+
+    <ResponseField name="paymentLinkId" type="string">
+      The ID of the payment link that was shared.
+    </ResponseField>
+
+    <ResponseField name="emails" type="array">
+      The list of email addresses the link was sent to.
+    </ResponseField>
+
+    <ResponseField name="metadata" type="object">
+      The metadata you attached to this share event, if any.
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of when this share was sent.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Payment link shared successfully",
+  "data": {
+    "id": "share_xyz789",
+    "paymentLinkId": "pl_abc123",
+    "emails": ["customer@example.com"],
+    "metadata": {
+      "orderId": "ORD-9876"
+    },
+    "createdAt": "2024-07-01T10:05:00.000Z"
+  }
+}
+```
+
+<Note>
+  Every share you send is logged and retrievable via [View Share History](/api-reference/payment-links/share-history). Use the `metadata` field to attach your own references so you can correlate share events with records in your system during reconciliation or support queries.
+</Note>

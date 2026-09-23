@@ -1,0 +1,101 @@
+---
+title: 'Authenticate Your Requests to the NadaPay REST API'
+sidebarTitle: 'Authentication'
+description: 'Pass your NadaPay API key in the x-api-key header on every request. Use secret keys server-side and public keys in the browser JS SDK.'
+---
+
+Every request to the NadaPay API must be authenticated. NadaPay uses API keys passed in a request header — there are no cookies, OAuth flows, or session tokens to manage. The type of key you use depends on where the code runs: secret keys belong exclusively on your server, and public keys are safe to embed in browser code.
+
+## API Key Types
+
+NadaPay issues two categories of key, each with sandbox and production variants.
+
+| Key Prefix | Category | Where to Use |
+|---|---|---|
+| `np_test_...` | Secret — Sandbox | Server-side only, sandbox environment |
+| `np_live_...` | Secret — Production | Server-side only, production environment |
+| `npk_test_...` | Public — Sandbox | Browser / JS SDK, sandbox environment |
+| `npk_live_...` | Public — Production | Browser / JS SDK, production environment |
+
+<Warning>
+  Never expose a `np_test_` or `np_live_` secret key in frontend code, version control, or client-side bundles. Secret keys have full API access and can move money on your behalf.
+</Warning>
+
+<Note>
+  Public keys (`npk_test_` and `npk_live_`) are designed to be embedded in browser code. They can only initiate checkout sessions and interact with the NadaPay JS SDK — they cannot execute payouts or modify your account.
+</Note>
+
+## Passing Your Key in the Header
+
+Add the `x-api-key` header to every server-side request. Replace `YOUR_API_KEY` with your actual secret key.
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organizations/accounts \
+  --header 'x-api-key: np_test_xxxxxxxxxxxxxxxxxxxx'
+```
+
+The header name is `x-api-key` in all lowercase. NadaPay does not accept the key as a query parameter or in the request body.
+
+## Idempotency Keys
+
+For any `POST` request that creates or mutates a resource — especially payouts and deposit instructions — include an `x-idempotency-key` header with a unique value (a UUID v4 is recommended). NadaPay uses this key to deduplicate requests so that retrying a failed network call does not create duplicate operations.
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/transactions/deposit-instructions \
+  --header 'x-api-key: np_test_xxxxxxxxxxxxxxxxxxxx' \
+  --header 'x-idempotency-key: 3b6f8e20-1234-4abc-b9de-000000000001' \
+  --header 'Content-Type: application/json' \
+  --data '{ ... }'
+```
+
+<Tip>
+  Generate a fresh UUID for every new logical operation. Reuse the same UUID only when you are retrying the exact same request after a network failure.
+</Tip>
+
+## Authentication Errors
+
+If your key is missing or invalid, the API returns a `401 Unauthorized` response:
+
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
+```
+
+Common causes of a `401`:
+
+- The `x-api-key` header is absent.
+- You are using a sandbox key (`np_test_`) against a production endpoint, or vice versa.
+- The key has been rotated or revoked in the NadaPay dashboard.
+
+## Using Public Keys in the JS SDK
+
+When you initialize the NadaPay Checkout JS SDK, pass your public key as the `key` option. Public keys (`npk_test_` or `npk_live_`) are the only keys intended for browser use.
+
+```html
+<script src="https://js.nadapay.io/v1/inline.js" async></script>
+<script>
+  window.addEventListener('load', function () {
+    NadaPay.init({
+      key: 'npk_test_xxxxxxxxxxxx',
+      environment: 'sandbox'
+    });
+  });
+</script>
+```
+
+Your server-side secret key is never required or used in the browser. Keep the two key types strictly separated.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/docs/quickstart">
+    Make your first authenticated API call and read a real response.
+  </Card>
+  <Card title="Accept Payments" icon="circle-dollar-to-slot" href="/docs/accept-payments">
+    Build a full checkout flow using both your secret key (backend) and public key (frontend).
+  </Card>
+</CardGroup>

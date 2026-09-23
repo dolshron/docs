@@ -1,0 +1,186 @@
+---
+title: 'Execute Batch Payouts in a Single API Call'
+sidebarTitle: 'Batch Payouts'
+description: 'Send multiple quoted payouts to different recipients in one request using the batch-execute endpoint. Each item uses its own quoteId and idempotency key.'
+---
+
+The batch execute endpoint lets you dispatch multiple payouts in a single API call rather than looping through individual execute requests. This is useful for payroll runs, marketplace settlements, bulk disbursements, and any other scenario where you need to fan out funds to multiple recipients at once. Each transaction in the batch must have its own pre-generated quote — the batch endpoint does not generate quotes for you.
+
+## When to use batch vs. single execution
+
+<CardGroup cols={2}>
+  <Card title="Use batch execute" icon="layer-group">
+    - Payroll: sending to tens or hundreds of employees at once
+    - Marketplace settlements: disbursing to multiple sellers in one operation
+    - Bulk disbursements: loans, rewards, or refunds to a list of recipients
+    - Any scenario where you want a single API call to fan out funds
+  </Card>
+  <Card title="Use single execute" icon="paper-plane">
+    - One-off transfers to a single recipient
+    - User-initiated payouts from a dashboard or app
+    - Transfers where you need to present confirmation to the user before committing
+    - Test or sandbox transactions during integration
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before calling `POST /transactions/batch-execute`:
+
+1. You have a valid `x-api-key`.
+2. You have a unique `x-idempotency-key` for the batch request itself.
+3. **Every item in the batch has its own valid, unexpired `quoteId`** — generate quotes individually with `POST /transactions/quote` before calling batch-execute.
+4. Every source account has sufficient available balance to cover its respective transaction amount and fees.
+5. Every item has its own unique per-item idempotency key.
+
+<Note>
+  Each transaction in the batch needs its own quote generated first. Call `POST /transactions/quote` once per recipient before assembling the batch request.
+</Note>
+
+## Execute a batch of payouts
+
+```bash
+curl --request POST \
+  --url $baseUrl/transactions/batch-execute \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: BATCH_UNIQUE_UUID' \
+  --data '{
+    "transactions": [
+      {
+        "idempotencyKey": "txn-idempotency-uuid-001",
+        "quoteId": "qte_01HXXXXXXXXXXXXXXXXXX",
+        "reason": "salary",
+        "reasonDescription": "January 2025 payroll",
+        "metadata": {
+          "employeeId": "emp-001",
+          "department": "engineering"
+        },
+        "source": {
+          "accountId": "acc-uuid-123",
+          "nadapayCode": "WAL-123",
+          "amount": 250000
+        },
+        "destination": {
+          "beneficiaryAccountId": "ben-acc-uuid-101",
+          "nadapayCode": "WAL-101"
+        }
+      },
+      {
+        "idempotencyKey": "txn-idempotency-uuid-002",
+        "quoteId": "qte_01HYYYYYYYYYYYYYYYY",
+        "reason": "salary",
+        "reasonDescription": "January 2025 payroll",
+        "metadata": {
+          "employeeId": "emp-002",
+          "department": "design"
+        },
+        "source": {
+          "accountId": "acc-uuid-123",
+          "nadapayCode": "WAL-123",
+          "amount": 180000
+        },
+        "destination": {
+          "beneficiaryAccountId": "ben-acc-uuid-102",
+          "nadapayCode": "WAL-102"
+        }
+      }
+    ]
+  }'
+```
+
+### Request body structure
+
+<ParamField body="transactions" type="array" required>
+  An array of transaction objects. Each object represents one payout in the batch.
+</ParamField>
+
+**Per-transaction fields:**
+
+<ParamField body="transactions[].idempotencyKey" type="string" required>
+  A unique idempotency key for this specific transaction within the batch. If the batch is retried, NadaPay uses this key to deduplicate individual items and avoid double-sending.
+</ParamField>
+
+<ParamField body="transactions[].quoteId" type="string" required>
+  The `quoteId` returned by a prior call to `POST /transactions/quote` for this specific transaction. Each item must have its own quote.
+</ParamField>
+
+<ParamField body="transactions[].reason" type="string" required>
+  A short transfer purpose category (e.g. `salary`, `invoice`, `gift`, `refund`).
+</ParamField>
+
+<ParamField body="transactions[].reasonDescription" type="string">
+  A human-readable description of the transfer reason.
+</ParamField>
+
+<ParamField body="transactions[].metadata" type="object">
+  Optional key-value pairs for this transaction. Returned in the webhook payload for this item.
+</ParamField>
+
+<ParamField body="transactions[].source.accountId" type="string">
+  The NadaPay account ID to debit for this transaction.
+</ParamField>
+
+<ParamField body="transactions[].source.nadapayCode" type="string">
+  The NadaPay code (`WAL-xxx`) of the source account.
+</ParamField>
+
+<ParamField body="transactions[].source.amount" type="integer">
+  The amount to debit in the smallest currency unit. Must match the amount in the corresponding quote.
+</ParamField>
+
+<ParamField body="transactions[].destination.beneficiaryAccountId" type="string">
+  The beneficiary account ID for this transaction's recipient.
+</ParamField>
+
+<ParamField body="transactions[].destination.accountId" type="string">
+  The NadaPay account ID — for internal wallet-to-wallet items in the batch.
+</ParamField>
+
+<ParamField body="transactions[].destination.nadapayCode" type="string">
+  The NadaPay code (`WAL-xxx`) of the destination account.
+</ParamField>
+
+### Response
+
+A successful response returns a result object for each transaction in the batch. Each item includes its own transaction ID and initial status.
+
+<ResponseField name="results" type="array">
+  An array of per-transaction outcomes, in the same order as the request array.
+</ResponseField>
+
+<ResponseField name="results[].id" type="string">
+  The unique transaction ID for this item. Save this to correlate webhook events and for reconciliation.
+</ResponseField>
+
+<ResponseField name="results[].status" type="string">
+  The initial status of this transaction (`PENDING` or `PROCESSING`).
+</ResponseField>
+
+<ResponseField name="results[].quoteId" type="string">
+  The quote ID this transaction was created from.
+</ResponseField>
+
+<ResponseField name="results[].error" type="object">
+  Present only if this specific item failed. Other items in the batch may still succeed.
+</ResponseField>
+
+<Note>
+  A batch response may contain a mix of successes and failures. Always iterate over `results` and check each item individually. A failure on one item does not roll back or cancel the other items in the batch.
+</Note>
+
+## Idempotency per item
+
+Each item in the batch carries its own `idempotencyKey`. If you need to retry a failed batch request (for example after a network timeout), NadaPay uses these per-item keys to identify which transactions were already created successfully and skip them — only the genuinely failed items are retried. This prevents double-sending to recipients who already received their payout.
+
+<Warning>
+  Never reuse an item `idempotencyKey` across different payouts to different recipients. Each combination of source, destination, and amount must have a unique key.
+</Warning>
+
+## Webhook notifications per transaction
+
+NadaPay sends one webhook event per transaction in the batch as each individual payout settles. You will not receive a single "batch complete" event — instead, you receive individual `transaction.completed`, `transaction.failed`, or `transaction.reversed` events for each item as its settlement status changes.
+
+<Tip>
+  Use the `metadata` you attach to each transaction (e.g. `employeeId`, `invoiceId`) to map incoming webhook events back to your internal records without having to look up each transaction ID.
+</Tip>

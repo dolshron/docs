@@ -1,0 +1,53 @@
+---
+title: 'GET /organizations/accounts — List Organization Accounts'
+sidebarTitle: 'List Accounts'
+description: 'List all financial accounts (wallets) in your organization. Filter by currency or status to find the accounts relevant to your workflow.'
+---
+
+Your organization can hold multiple financial accounts — one per currency. Use this endpoint to retrieve all of them at once, optionally filtering by currency or wallet status. This is the right call when you need to render a full wallet dashboard, populate an account selector, or identify which accounts are currently active.
+
+## Query parameters
+
+<ParamField query="status" type="string">
+  Filter by wallet status. Accepted values: `ACTIVE`, `INACTIVE`.
+</ParamField>
+
+<ParamField query="currency" type="string">
+  Filter by currency code, e.g. `USD`, `NGN`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/accounts?status=ACTIVE&currency=USD' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns a list of financial accounts and their current balances.
+
+<ResponseField name="data" type="array">
+  Array of account objects. Each item contains `id`, `name`, `currency`, and `walletStatus`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "List of financial accounts and their current balances.",
+  "data": [
+    {
+      "id": "acc-uuid-123",
+      "name": "Main Wallet",
+      "currency": "USD",
+      "walletStatus": "ACTIVE"
+    },
+    {
+      "id": "acc-uuid-456",
+      "name": "NGN Wallet",
+      "currency": "NGN",
+      "walletStatus": "ACTIVE"
+    }
+  ]
+}
+```

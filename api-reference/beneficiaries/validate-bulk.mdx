@@ -1,0 +1,133 @@
+---
+title: "POST /beneficiaries/validate-bulk — Validate Bulk Accounts"
+sidebarTitle: "Validate Bulk"
+description: "Validate multiple beneficiary account details before creation to catch errors early and prevent misdirected payouts in a batch workflow."
+---
+
+Before committing to a bulk beneficiary creation, use this endpoint to validate your list of account details. NadaPay checks each entry and returns a per-item validation result so you can identify and correct errors before they block a batch. This is especially valuable when onboarding large lists of payroll recipients or vendor accounts where a single invalid record could interrupt the whole batch. This endpoint does not create any beneficiaries — it only validates the data you send.
+
+## Request
+
+**POST** `https://core.nadapay.io/api/v1/beneficiaries/validate-bulk`
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/beneficiaries/validate-bulk \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "beneficiaries": [
+      {
+        "name": "Amara Diallo",
+        "email": "amara.diallo@example.com",
+        "currency": "NGN",
+        "type": "EXTERNAL_BANK",
+        "details": {
+          "accountNumber": "0123456789",
+          "accountName": "Amara Diallo",
+          "networkId": "net_gtbank_ng",
+          "country": "NG",
+          "rail": "BANK_TRANSFER"
+        }
+      },
+      {
+        "name": "Kofi Mensah",
+        "currency": "GHS",
+        "type": "EXTERNAL_WALLET",
+        "details": {
+          "phoneNumber": "+233241234567",
+          "provider": "MTN",
+          "country": "GH"
+        }
+      }
+    ]
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="beneficiaries" type="array" required>
+  An array of beneficiary objects to validate. Each object follows the same schema as the Create Beneficiary request, including `name`, `currency`, `type`, and `details`. The array must contain at least one item.
+
+  <Expandable title="Each beneficiary object">
+    <ParamField body="beneficiaries[].name" type="string" required>
+      Full name of the beneficiary.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].email" type="string">
+      Beneficiary email address.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].phone" type="string">
+      Beneficiary phone number.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].currency" type="string" required>
+      ISO 4217 currency code for the payout destination.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].type" type="string" required>
+      Destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+    </ParamField>
+
+    <ParamField body="beneficiaries[].details" type="object" required>
+      Payout destination details. The required sub-fields depend on the rail type — see Create Beneficiary for the full field reference per rail.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+A successful `200 OK` response returns an array of validation results, one entry per input item, in the same order as your request array.
+
+```json
+{
+  "data": [
+    {
+      "index": 0,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "index": 1,
+      "valid": false,
+      "errors": [
+        {
+          "field": "details.networkId",
+          "message": "networkId is required for mobile money payouts on this corridor"
+        }
+      ]
+    }
+  ]
+}
+```
+
+<ResponseField name="data" type="array">
+  Array of validation result objects, in the same order as the input `beneficiaries` array.
+</ResponseField>
+
+<ResponseField name="data[].index" type="number">
+  Zero-based index of the corresponding entry in the input array. Use this to map validation results back to your original list.
+</ResponseField>
+
+<ResponseField name="data[].valid" type="boolean">
+  `true` if the entry passed all validation checks and can be created. `false` if one or more errors were found.
+</ResponseField>
+
+<ResponseField name="data[].errors" type="array">
+  Array of error objects describing why this entry failed validation. Empty when `valid` is `true`.
+</ResponseField>
+
+<ResponseField name="data[].errors[].field" type="string">
+  The dot-path of the field that failed validation, e.g. `details.networkId`.
+</ResponseField>
+
+<ResponseField name="data[].errors[].message" type="string">
+  A human-readable description of the validation failure.
+</ResponseField>

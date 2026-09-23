@@ -1,0 +1,76 @@
+---
+title: 'GET /organization/customers/:id — Get Customer Details'
+sidebarTitle: 'Get'
+description: 'Fetch a single customer record by ID. Returns the full customer profile including name, email, phone number, address, and creation timestamp.'
+---
+
+Use this endpoint when you need the full details of a specific customer — for example, to pre-fill a form, verify contact information before sending an invoice, or display a customer profile in your dashboard. Pass the customer's `id` as a path parameter.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the customer to retrieve, e.g. `cus_abc123`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organization/customers/cus_abc123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns the customer object.
+
+<ResponseField name="id" type="string">
+  The customer's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The customer's full name or business name.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  The customer's email address.
+</ResponseField>
+
+<ResponseField name="phone" type="string">
+  The customer's phone number, if set.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  The customer's address, if set.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Any arbitrary key-value pairs stored with this customer.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the customer was created.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Customer details retrieved successfully",
+  "data": {
+    "id": "cus_abc123",
+    "name": "Biffco Enterprise",
+    "email": "biffco@enterprise.com",
+    "phone": "+2348000000000",
+    "address": "42 Victoria Island, Lagos",
+    "metadata": {
+      "internal_id": "cust_99182"
+    },
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `404` | No customer found with the given `id` in your organization. |

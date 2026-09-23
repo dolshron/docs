@@ -1,0 +1,38 @@
+---
+title: 'DELETE /organization/invoices/:id — Delete a Draft Invoice'
+sidebarTitle: 'Delete'
+description: 'Permanently delete a DRAFT invoice. Only invoices in DRAFT status are eligible for deletion — sent, paid, or overdue invoices cannot be removed.'
+---
+
+Use this endpoint to discard a draft invoice you no longer need — for example, if it was created in error or superseded by a corrected version. Because this operation is irreversible, make sure the invoice is genuinely disposable before calling it. Only invoices in `DRAFT` status are eligible for deletion; attempting to delete a `SENT`, `PAID`, `OVERDUE`, or `CANCELLED` invoice will return an error.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the draft invoice to delete.
+</ParamField>
+
+```bash
+curl --request DELETE \
+  --url https://core.nadapay.io/api/v1/organization/invoices/inv_abc123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response confirms the invoice was deleted.
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Invoice deleted successfully"
+}
+```
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `404` | No invoice found with the given `id`. |
+| `422` | The invoice is not in `DRAFT` status and cannot be deleted. |

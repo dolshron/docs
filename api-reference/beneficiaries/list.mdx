@@ -1,0 +1,132 @@
+---
+title: "GET /beneficiaries — List All Beneficiary Profiles"
+sidebarTitle: "List Beneficiaries"
+description: "Retrieve a list of all beneficiary profiles in your organization, with optional filters for status and currency to narrow the results."
+---
+
+Use this endpoint to retrieve all beneficiary profiles your organization has registered. You can filter the results by status or currency if you only need a subset — for example, to display active NGN recipients in your payout dashboard. The response returns an array of beneficiary objects, each identified by its unique `id`.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/beneficiaries`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="page" type="number">
+  Page number for paginated results. Defaults to `1`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Number of beneficiaries to return per page. Defaults to `10`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by beneficiary status. Common values include `active` and `inactive`.
+</ParamField>
+
+<ParamField query="currency" type="string">
+  Filter by the beneficiary's payout currency, e.g. `USD`, `NGN`, `KES`.
+</ParamField>
+
+## Filtered request example
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries?status=active&currency=NGN&page=1&limit=20' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A successful `200 OK` response returns an array of beneficiary profile objects.
+
+```json
+{
+  "data": [
+    {
+      "id": "ben_01HXXXXXXXXXXXXXXXXXX",
+      "name": "Amara Diallo",
+      "email": "amara.diallo@example.com",
+      "phone": "+2348012345678",
+      "type": "EXTERNAL_BANK",
+      "status": "active",
+      "currency": "NGN",
+      "created_at": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "ben_01HYYYYYYYYYYYYYYYYYY",
+      "name": "Kofi Mensah",
+      "phone": "+233241234567",
+      "type": "EXTERNAL_WALLET",
+      "status": "active",
+      "currency": "GHS",
+      "created_at": "2025-01-02T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 2
+  }
+}
+```
+
+<ResponseField name="data" type="array">
+  Array of beneficiary profile objects.
+</ResponseField>
+
+<ResponseField name="data[].id" type="string">
+  Unique identifier for the beneficiary. Use this when fetching a single beneficiary, adding accounts, or initiating payouts.
+</ResponseField>
+
+<ResponseField name="data[].name" type="string">
+  Display name of the beneficiary.
+</ResponseField>
+
+<ResponseField name="data[].email" type="string">
+  Beneficiary email address, if provided at creation.
+</ResponseField>
+
+<ResponseField name="data[].phone" type="string">
+  Beneficiary phone number, if provided at creation.
+</ResponseField>
+
+<ResponseField name="data[].type" type="string">
+  Destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ResponseField>
+
+<ResponseField name="data[].status" type="string">
+  Current status of the beneficiary profile.
+</ResponseField>
+
+<ResponseField name="data[].currency" type="string">
+  Payout currency associated with this beneficiary.
+</ResponseField>
+
+<ResponseField name="data[].created_at" type="string">
+  ISO 8601 timestamp when the beneficiary was created.
+</ResponseField>
+
+<ResponseField name="meta.page" type="number">
+  Current page number.
+</ResponseField>
+
+<ResponseField name="meta.limit" type="number">
+  Number of results returned per page.
+</ResponseField>
+
+<ResponseField name="meta.total" type="number">
+  Total number of beneficiaries matching the filter criteria.
+</ResponseField>

@@ -1,0 +1,211 @@
+---
+title: 'Configure Your NadaPay Checkout Widget and Branding'
+sidebarTitle: 'Checkout Config'
+description: 'Create, list, and archive NadaPay checkout configurations to control branding, payment methods, currencies, and redirect URLs for your widget.'
+---
+
+A checkout configuration is a reusable set of settings that controls how the NadaPay Checkout widget looks and behaves for your customers. Each configuration defines the settlement account, accepted payment methods, enabled currencies, allowed embedding domains, and branding. You create a configuration once and reference it when you initialize the widget. This guide covers creating a configuration, listing existing configurations, and archiving one when it is no longer needed.
+
+## What a Checkout Configuration Controls
+
+| Setting | Description |
+|---|---|
+| `name` | Internal label for the configuration |
+| `settlementAccountId` | The wallet where successful payments are deposited |
+| `checkoutType` | `CUSTOM` for free-form amounts or `PRODUCT` for catalog-linked checkouts |
+| `allowedDomains` | Domains permitted to embed this configuration — validated against the `Origin` header |
+| `branding` | Logo URL, brand color, and other visual overrides |
+| `returnUrl` / `successUrl` | Where to redirect the customer after payment |
+| `enabledFiatCurrencies` | Fiat currencies the widget offers (e.g. `USD`, `NGN`) |
+| `enabledCryptoCurrencies` | Crypto assets the widget offers (e.g. `USDC`, `SOL`) |
+| `enabledPaymentMethods` | Payment channels available in the widget |
+
+## Configure (Create) a Checkout Configuration
+
+Send a `POST` request to create a new configuration. The `name`, `settlementAccountId`, and `checkoutType` fields are required. All other fields are optional.
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/checkout/configure \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Web Checkout Widget",
+    "settlementAccountId": "acct_01hw3x7k2r4p5q6m8n9v",
+    "checkoutType": "CUSTOM",
+    "allowedDomains": ["https://yourapp.com"],
+    "branding": {},
+    "returnUrl": "https://example.com/checkout/return",
+    "successUrl": "https://example.com/checkout/success",
+    "enabledFiatCurrencies": ["USD", "NGN"],
+    "enabledCryptoCurrencies": ["USDC", "SOL"],
+    "enabledPaymentMethods": ["crypto", "bank_transfer"]
+  }'
+```
+
+### Field Reference
+
+<ParamField body="name" type="string" required>
+  A label to identify this configuration in your dashboard and API responses.
+</ParamField>
+
+<ParamField body="settlementAccountId" type="string" required>
+  The ID of the NadaPay wallet where funds settle after a successful checkout.
+</ParamField>
+
+<ParamField body="checkoutType" type="string" required>
+  Either `CUSTOM` for an amount-based checkout or `PRODUCT` for a checkout tied to specific catalog products.
+</ParamField>
+
+<ParamField body="productIds" type="array">
+  Required when `checkoutType` is `PRODUCT`. Array of product IDs this checkout sells.
+</ParamField>
+
+<ParamField body="allowedDomains" type="array">
+  Array of origin URLs (e.g. `["https://yourapp.com"]`) that are permitted to embed this checkout widget. NadaPay validates incoming requests against the `Origin` header.
+</ParamField>
+
+<ParamField body="branding" type="object">
+  Object containing visual customizations such as logo URL and brand color.
+</ParamField>
+
+<ParamField body="returnUrl" type="string">
+  URL where the customer is redirected after completing or cancelling payment.
+</ParamField>
+
+<ParamField body="successUrl" type="string">
+  URL where the customer is redirected specifically after a successful payment.
+</ParamField>
+
+<ParamField body="enabledFiatCurrencies" type="array">
+  Array of ISO 4217 currency codes for fiat payment options, e.g. `["USD", "NGN"]`.
+</ParamField>
+
+<ParamField body="enabledCryptoCurrencies" type="array">
+  Array of crypto asset tickers for crypto payment options, e.g. `["USDC", "SOL"]`.
+</ParamField>
+
+<ParamField body="enabledPaymentMethods" type="array">
+  Array of payment channels to enable. Accepted values: `crypto`, `nadapay_wallet`, `card`, `bank_transfer`.
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Checkout configured successfully",
+  "data": {
+    "id": "chk_01hw3x7k2r4p5q6m8n9v",
+    "brandColor": "#7C3AED",
+    "logoUrl": "https://cdn.example.com/logo.png",
+    "redirectUrl": "https://app.example.com/payment/success",
+    "allowedChannels": ["card", "bank_transfer"],
+    "environment": "live",
+    "updatedAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+Save the returned `id` — you will reference it when listing or archiving this configuration.
+
+### Frontend Integration Notes
+
+<Info>
+  Read `enabledPaymentMethods` from your configuration at render time. Do not hardcode payment options in your UI — fetch them from your configuration so changes made via the API propagate automatically to the widget.
+</Info>
+
+- Send a valid `Origin` header on any browser-facing request against this configuration so `allowedDomains` validation succeeds.
+
+---
+
+## List Checkout Configurations
+
+Retrieve all saved checkout configurations for your organization. Use pagination parameters to control result size and ordering.
+
+```bash
+curl --request GET \
+  --url "https://core.nadapay.io/api/v1/organization/checkout?page=1&limit=10&sortBy=createdAt&sortOrder=desc" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Query Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `page` | `1` | Page number for pagination |
+| `limit` | `10` | Number of results per page |
+| `sortBy` | `createdAt` | Field to sort results by |
+| `sortOrder` | `desc` | Sort direction: `asc` or `desc` |
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Configurations retrieved successfully",
+  "data": {
+    "items": [
+      {
+        "id": "chk_01hw3x7k2r4p5q6m8n9v",
+        "brandColor": "#7C3AED",
+        "environment": "live",
+        "createdAt": "2024-07-01T10:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+Use the `id` from this response to reference a configuration in your integration or to pass to the archive endpoint.
+
+---
+
+## Archive a Checkout Configuration
+
+Archiving permanently disables a configuration. Any active checkout sessions that reference this configuration will stop working immediately.
+
+<Warning>
+  Archiving a checkout configuration cannot be undone. Before you archive, confirm that no live integrations are referencing this configuration's `id`. Any in-progress checkout session tied to it will fail immediately after archiving.
+</Warning>
+
+```bash
+curl --request DELETE \
+  --url "https://core.nadapay.io/api/v1/organization/checkout/{id}" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+Replace `{id}` with the configuration ID returned from the configure or list endpoints.
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Configuration archived successfully",
+  "data": null
+}
+```
+
+### Before You Archive
+
+- Audit your codebase and any running integrations for references to this configuration's `id`.
+- Check for any active payment links or hosted checkout sessions using this configuration.
+- Create a replacement configuration first if you need to continue accepting payments on the same domain.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Accept Payments" icon="code" href="/docs/accept-payments">
+    Use your checkout configuration when initializing the NadaPay JS SDK.
+  </Card>
+  <Card title="Payment Links" icon="link" href="/docs/payment-links">
+    Create hosted payment URLs backed by a checkout configuration.
+  </Card>
+</CardGroup>

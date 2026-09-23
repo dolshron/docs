@@ -1,0 +1,59 @@
+---
+title: "DELETE /beneficiaries/:id/accounts/:accountId — Remove"
+sidebarTitle: "Remove Account"
+description: "Permanently remove a specific payout account from a beneficiary profile without deleting the beneficiary itself or its other accounts."
+---
+
+Use this endpoint to detach a single payout account from a beneficiary — for example, when a recipient closes a bank account or switches mobile money providers. Removing an account does not delete the beneficiary profile or any other accounts still attached to it. If you want to stop using an account temporarily rather than permanently, consider updating its status to inactive via the Update Account endpoint instead.
+
+## Request
+
+**DELETE** `https://core.nadapay.io/api/v1/beneficiaries/{id}/accounts/{accountId}`
+
+```bash
+curl --request DELETE \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts/acc_01HXXXXXXXXXXXXXXXXXX' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the beneficiary that owns the account you want to remove.
+</ParamField>
+
+<ParamField path="accountId" type="string" required>
+  The unique identifier of the payout account you want to permanently remove. This is the `id` returned when the account was added or when you fetch the beneficiary's details.
+</ParamField>
+
+## Response
+
+A successful `200 OK` response confirms the payout account has been removed.
+
+```json
+{
+  "data": {
+    "success": true,
+    "id": "acc_01HXXXXXXXXXXXXXXXXXX",
+    "message": "Beneficiary account removed."
+  }
+}
+```
+
+<ResponseField name="data.success" type="boolean">
+  `true` when the payout account was removed successfully.
+</ResponseField>
+
+<ResponseField name="data.id" type="string">
+  The ID of the payout account that was removed.
+</ResponseField>
+
+<ResponseField name="data.message" type="string">
+  A human-readable confirmation message.
+</ResponseField>

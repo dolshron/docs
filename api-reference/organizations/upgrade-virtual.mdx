@@ -1,0 +1,69 @@
+---
+title: 'PATCH /organizations/accounts/:id/virtual — Upgrade to Virtual Account'
+sidebarTitle: 'Upgrade Account'
+description: 'Provision a dedicated virtual bank account number for a currency wallet, enabling direct bank transfer deposits without one-off deposit instructions.'
+---
+
+By default, your NadaPay wallets receive deposits via generated deposit instructions. Upgrading a wallet to a virtual account provisions a dedicated, persistent bank account number (account number and bank name) that you can share with counterparties for direct bank transfers. Call this endpoint once per currency when you want that wallet to accept ongoing bank transfers. Use the `x-idempotency-key` header to prevent duplicate provisioning requests.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the financial account to upgrade.
+</ParamField>
+
+## Request body
+
+<ParamField body="currency" type="string" required>
+  The currency of the wallet to upgrade, e.g. `USD`. Must match the currency of the account identified by `:id`.
+</ParamField>
+
+## Headers
+
+<ParamField header="x-idempotency-key" type="string">
+  A unique UUID to prevent duplicate provisioning. Recommended for all mutating requests.
+</ParamField>
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organizations/accounts/acc-uuid-123/virtual \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: a4b7c9d2-e3f1-4a5b-8c6d-7e8f9a0b1c2d' \
+  --data '{
+    "currency": "USD"
+  }'
+```
+
+## Response
+
+A `200` response returns the provisioned virtual account details.
+
+<ResponseField name="accountNumber" type="string">
+  The assigned virtual bank account number.
+</ResponseField>
+
+<ResponseField name="bankName" type="string">
+  The name of the bank holding the virtual account.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency associated with this virtual account.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Virtual account details successfully provisioned.",
+  "data": {
+    "accountNumber": "1234567890",
+    "bankName": "First Bank",
+    "currency": "USD"
+  }
+}
+```
+
+<Note>
+  Call this endpoint once per currency. Subsequent deposits to the provisioned account number will credit your NadaPay wallet automatically.
+</Note>

@@ -1,0 +1,103 @@
+---
+title: 'GET /transactions/limits — Check Transaction Limits'
+sidebarTitle: 'Get Limits'
+description: 'Check the minimum, maximum, and daily transaction limits for a currency–country–rail corridor before generating a quote or executing a payout.'
+---
+
+The limits endpoint returns the minimum amount, maximum amount, and daily limit that apply to a specific corridor — defined by a currency, country, and payment rail. You should call this endpoint once you know the corridor and amount, and before calling Generate Quote or Execute Transaction. Surfacing a clear validation error to your user at this stage avoids a harder failure at execution time. Like network availability, limits can change, so fetch them fresh per session rather than caching values in your application.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/limits
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID to prevent duplicate processing. |
+
+## Request Parameters
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code for the source side of the transaction. For example, `"USD"`.
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  ISO 3166-1 alpha-2 country code for the destination corridor. For example, `"NG"` for Nigeria.
+</ParamField>
+
+<ParamField body="rail" type="string">
+  The payment rail to check limits for. For example, `"bank_transfer"` or `"mtn_momo"`. Omit to return limits across all available rails for the corridor.
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/limits \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "currency": "USD",
+    "country": "NG",
+    "rail": "bank_transfer"
+  }'
+```
+
+## Response Fields
+
+A `200` response returns the limit constraints for the requested corridor.
+
+<ResponseField name="minAmount" type="number">
+  The minimum transaction amount accepted for this corridor, in the specified currency.
+</ResponseField>
+
+<ResponseField name="maxAmount" type="number">
+  The maximum single transaction amount accepted for this corridor, in the specified currency.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency code these limits apply to, echoed from your request.
+</ResponseField>
+
+<ResponseField name="dailyLimit" type="number">
+  The maximum cumulative amount you can send through this corridor within a 24-hour window. May be `null` if no daily cap is configured.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "minAmount": 10,
+  "maxAmount": 50000,
+  "currency": "USD",
+  "dailyLimit": 200000
+}
+```
+
+## Validation Logic
+
+Before calling Generate Quote, confirm your transaction amount satisfies all three constraints:
+
+```
+transaction_amount >= minAmount
+transaction_amount <= maxAmount
+daily_volume_so_far + transaction_amount <= dailyLimit
+```
+
+If any check fails, surface a clear error to your user — do not let it fail silently at execution time.
+
+## Common Failure Reasons
+
+- The corridor is not supported for the currency and country pair.
+- The `rail` value is invalid for the requested transaction type.
+- No limit configuration exists for the combination you provided.
+
+## What to Call Next
+
+- [Get Networks](/api-reference/transactions/get-networks) — check which rails are available for your destination country.
+- [Generate Quote](/api-reference/transactions/generate-quote) — lock in a rate once your amount passes the limits check.

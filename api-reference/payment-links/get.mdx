@@ -1,0 +1,140 @@
+---
+title: 'GET /organization/payment-links/:id — Get a Payment Link'
+sidebarTitle: 'Get'
+description: 'Retrieve full details for a single payment link by ID, including its shareable URL, amount, currency, status, and configuration settings.'
+---
+
+Use this endpoint to fetch the complete details of a specific payment link by its unique identifier. The response includes all configuration fields set at creation time — the shareable URL, amount, currency, active status, expiry, data collection settings, and any custom messaging. This is the right endpoint to call when you need to display a link's details in your dashboard, verify its current state, or retrieve the `url` to re-share with a customer.
+
+## Endpoint
+
+```
+GET https://core.nadapay.io/api/v1/organization/payment-links/:id
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the payment link you want to retrieve. This is the `id` returned when you [created the link](/api-reference/payment-links/create) or found via [List Payment Links](/api-reference/payment-links/list).
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organization/payment-links/pl_abc123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the payment link is found and returned successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success, `404` if the link is not found.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status, e.g. `"Payment link details retrieved successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The full payment link object.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      Unique payment link identifier.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Internal display name for the payment link.
+    </ResponseField>
+
+    <ResponseField name="slug" type="string">
+      URL-friendly slug used in the hosted payment page path.
+    </ResponseField>
+
+    <ResponseField name="url" type="string">
+      The fully formed, shareable payment link URL.
+    </ResponseField>
+
+    <ResponseField name="checkoutType" type="string">
+      `"PRODUCT"` or `"CUSTOM"`.
+    </ResponseField>
+
+    <ResponseField name="amount" type="number">
+      Fixed payment amount in the smallest currency unit. `null` for variable-amount links.
+    </ResponseField>
+
+    <ResponseField name="currency" type="string">
+      ISO 4217 currency code.
+    </ResponseField>
+
+    <ResponseField name="isVariableAmount" type="boolean">
+      `true` if the customer can enter their own amount.
+    </ResponseField>
+
+    <ResponseField name="isActive" type="boolean">
+      `true` when the link is accepting payments. `false` after archiving or expiry.
+    </ResponseField>
+
+    <ResponseField name="collectAddress" type="boolean">
+      Whether the payment form collects a shipping or billing address.
+    </ResponseField>
+
+    <ResponseField name="collectPhoneNumber" type="boolean">
+      Whether the payment form collects a phone number.
+    </ResponseField>
+
+    <ResponseField name="redirectUrl" type="string">
+      Post-payment redirect URL, if configured.
+    </ResponseField>
+
+    <ResponseField name="successMessage" type="string">
+      Custom success screen message, if configured.
+    </ResponseField>
+
+    <ResponseField name="expiresAt" type="string">
+      ISO 8601 expiry timestamp, or `null` if the link has no expiry.
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of link creation.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Payment link details retrieved successfully",
+  "data": {
+    "id": "pl_abc123",
+    "name": "Consultation Fee",
+    "slug": "consultation-fee",
+    "url": "https://pay.nadapay.io/consultation-fee",
+    "checkoutType": "CUSTOM",
+    "amount": 5000,
+    "currency": "USD",
+    "isVariableAmount": false,
+    "isActive": true,
+    "collectAddress": false,
+    "collectPhoneNumber": false,
+    "redirectUrl": "https://yoursite.com/thank-you",
+    "successMessage": "Thanks for your payment!",
+    "expiresAt": "2024-12-31T23:59:59.000Z",
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```

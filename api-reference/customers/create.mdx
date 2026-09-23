@@ -1,0 +1,91 @@
+---
+title: 'POST /organization/customers — Create a Customer'
+sidebarTitle: 'Create'
+description: 'Add a new customer to your organization. Each customer must have a unique email address — a 409 response means the email is already registered.'
+---
+
+The Customers API lets you build a persistent identity layer for the people and businesses you invoice or bill through NadaPay. When you create a customer, you receive an `id` that you can attach to invoices and payment links, giving you a clean audit trail across every transaction. Keep in mind that `email` must be unique per organization; if you receive a `409`, look up the existing record by email rather than creating a duplicate.
+
+## Request
+
+<ParamField body="name" type="string" required>
+  The customer's full name or business name.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  The customer's email address. Must be unique within your organization. NadaPay uses this address to deliver invoices and payment notifications.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string">
+  The customer's phone number in E.164 format, e.g. `+2348000000000`.
+</ParamField>
+
+<ParamField body="address" type="string">
+  The customer's mailing or billing address.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs you want to store alongside this customer record — useful for mapping NadaPay customer IDs to your own internal identifiers.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organization/customers \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Biffco Enterprise",
+    "email": "biffco@enterprise.com",
+    "phoneNumber": "+2348000000000",
+    "address": "42 Victoria Island, Lagos",
+    "metadata": {
+      "internal_id": "cust_99182"
+    }
+  }'
+```
+
+## Response
+
+A successful `201` response returns the newly created customer object.
+
+<ResponseField name="id" type="string">
+  Unique identifier for the customer, e.g. `cus_abc123`. Use this value when creating invoices or payment links.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The customer's name as provided.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  The customer's email address.
+</ResponseField>
+
+<ResponseField name="phone" type="string">
+  The customer's phone number, if provided.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the customer was created.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Customer created successfully",
+  "data": {
+    "id": "cus_abc123",
+    "name": "Biffco Enterprise",
+    "email": "biffco@enterprise.com",
+    "phone": "+2348000000000",
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `409` | A customer with that email already exists in your organization. Retrieve the existing record instead of creating a duplicate. |
+| `401` | Missing or invalid `x-api-key`. |

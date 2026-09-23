@@ -1,0 +1,122 @@
+---
+title: 'POST /transactions/deposit-instructions — Fund a Wallet'
+sidebarTitle: 'Deposit Instructions'
+description: 'Retrieve the exact funding instructions needed to send money into a NadaPay wallet, including the reference that must accompany every inbound transfer.'
+---
+
+The deposit instructions endpoint returns the complete set of funding instructions for a specific NadaPay wallet. Call this endpoint before any money is sent into the platform so you can provide the correct account details and reference to the party initiating the inbound transfer. NadaPay uses the returned `reference` to match the incoming payment to the correct wallet — an incorrect or missing reference will delay crediting.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/deposit-instructions
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID to prevent duplicate processing. |
+
+## Request Parameters
+
+<ParamField body="source" type="object" required>
+  Describes the funding source — the party sending money into NadaPay.
+
+  <Expandable title="source properties">
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code of the inbound funds. For example, `"USD"`.
+    </ParamField>
+
+    <ParamField body="country" type="string" required>
+      ISO 3166-1 alpha-2 country code of the funding source. For example, `"NG"`.
+    </ParamField>
+
+    <ParamField body="amount" type="number" required>
+      The expected inbound amount in the source currency.
+    </ParamField>
+
+    <ParamField body="details" type="object">
+      Additional rail-specific details required for the funding flow. Pass an empty object `{}` if no additional details are needed for your rail.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="destination" type="object" required>
+  Identifies the NadaPay wallet to fund.
+
+  <Expandable title="destination properties">
+    <ParamField body="nadapayCode" type="string" required>
+      The unique NadaPay wallet identifier for the account you want to fund. For example, `"WAL-123"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/deposit-instructions \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "source": {
+      "currency": "USD",
+      "country": "NG",
+      "amount": 100,
+      "details": {}
+    },
+    "destination": {
+      "nadapayCode": "WAL-123"
+    }
+  }'
+```
+
+## Response Fields
+
+A `200` response returns the full funding instruction set for the specified wallet.
+
+<ResponseField name="reference" type="string">
+  A unique reference code that must be included with the inbound transfer. NadaPay uses this to match the payment to the correct wallet.
+</ResponseField>
+
+<ResponseField name="accountName" type="string">
+  The account name the funding party should use as the beneficiary.
+</ResponseField>
+
+<ResponseField name="accountNumber" type="string">
+  The account number or address to send funds to.
+</ResponseField>
+
+<ResponseField name="bankName" type="string">
+  The name of the bank or payment provider holding the destination account.
+</ResponseField>
+
+<ResponseField name="routingDetails" type="object">
+  Additional routing information required by the selected rail (for example, sort code, IBAN, or SWIFT/BIC). Fields vary by corridor.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "reference": "NDP-REF-20240923-ABCD",
+  "accountName": "NadaPay Settlements Ltd",
+  "accountNumber": "0123456789",
+  "bankName": "First City Monument Bank",
+  "routingDetails": {
+    "bankCode": "214"
+  }
+}
+```
+
+<Warning>
+  **Always include the exact `reference` with the inbound transfer.** Deposit instructions are unique per wallet. A missing or incorrect reference will delay crediting and may require manual reconciliation by the NadaPay support team.
+</Warning>
+
+## What to Call Next
+
+- Wait for a webhook event confirming the deposit landed before treating the wallet as funded — do not assume success from this call alone.
+- [Check Transaction Limits](/api-reference/transactions/get-limits) — verify the deposit amount is within corridor bounds.

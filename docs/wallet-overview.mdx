@@ -1,0 +1,63 @@
+---
+title: 'Manage Multi-Currency Wallets in NadaPay'
+sidebarTitle: 'Overview'
+description: 'NadaPay gives your organization one ledger per currency. Learn how to list wallets, check balances, view transaction history, and upgrade to a virtual account.'
+---
+
+NadaPay organizes your funds as one wallet per currency. If your organization holds USD, NGN, and USDC, you have three separate wallets — each with its own unique ID, independent balance, and dedicated ledger. The Wallet API lets you inspect and manage these accounts: list all wallets, fetch details on a single wallet, check a currency balance before quoting, page through ledger entries for reconciliation, look up accounts by their NadaPay code, and upgrade a fiat wallet to receive direct bank transfers via a virtual account number.
+
+## Wallets vs. balances
+
+A wallet is a full ledger account for a single currency. A balance is just the current value of that ledger — a single number. Use the wallet endpoints when you need account metadata (ID, status, name), and use the balance endpoint when you only need to know how much you have before executing a transaction.
+
+```
+Organization
+├── Wallet: USD  (id: acc-uuid-001, balance: 5,000.00)
+├── Wallet: NGN  (id: acc-uuid-002, balance: 8,250,000.00)
+└── Wallet: USDC (id: acc-uuid-003, balance: 2,100.00)
+```
+
+Each wallet has:
+- A unique `id` used in API calls
+- A `nadapayCode` in the format `WAL-xxx` for human-readable references and internal transfers
+- A `walletStatus` (`ACTIVE`, `INACTIVE`, or `SUSPENDED`)
+- A full transaction ledger
+
+## What you can do with the Wallet API
+
+| Action | Endpoint | When to use |
+| --- | --- | --- |
+| List all wallets | `GET /organizations/accounts` | Dashboard rendering, account discovery |
+| Get one wallet | `GET /organizations/accounts/{id}` | Fetching details before a transaction |
+| Check a currency balance | `GET /organizations/balance/{currency}` | Pre-flight balance check before quoting |
+| View ledger entries | `GET /organizations/accounts/{id}/ledger` | Reconciliation and reporting |
+| Lookup by NadaPay code | `GET /organizations/nadapay-code/{code}` | Verify a recipient before an internal transfer |
+| Upgrade to virtual account | `POST /organizations/upgrade-virtual-account` | Enable direct bank transfer funding |
+| Get deposit instructions | `GET /organizations/accounts/{id}/deposit-instructions` | One-off funding instructions |
+
+## How to fund a wallet
+
+You have two options for funding a fiat wallet:
+
+<Tabs>
+  <Tab title="One-off deposit instructions">
+    Call `GET /organizations/accounts/{id}/deposit-instructions` to retrieve the bank details for a single deposit. Use this for ad-hoc top-ups where you do not need a permanent receiving account number.
+  </Tab>
+  <Tab title="Virtual account (permanent)">
+    Call `POST /organizations/upgrade-virtual-account` once per currency to provision a permanent virtual bank account number for that wallet. After the upgrade, anyone can fund the wallet by sending a standard bank transfer to the virtual account — no additional API calls required for each deposit.
+  </Tab>
+</Tabs>
+
+## Explore the wallet guides
+
+<CardGroup cols={3}>
+  <Card title="Financial Accounts" icon="building-columns" href="/docs/financial-accounts">
+    List all wallets, fetch a single account by ID, look up by NadaPay code, and upgrade to a virtual account.
+  </Card>
+  <Card title="Currency Balance" icon="scale-balanced" href="/docs/currency-balance">
+    Quickly check the available balance for a specific currency before generating a payout quote.
+  </Card>
+  <Card title="Account Ledger" icon="book-open" href="/docs/account-ledger">
+    Page through debit and credit entries for a wallet to support reconciliation and reporting.
+  </Card>
+</CardGroup>

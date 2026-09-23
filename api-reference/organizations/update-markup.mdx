@@ -1,0 +1,79 @@
+---
+title: 'PATCH /organizations/:id/fee-markup — Set Partner Fee Markup'
+sidebarTitle: 'Fee Markup'
+description: 'Set a fee markup in basis points on top of NadaPay base rates for a transaction type. Restricted to PARTNER class organizations only.'
+---
+
+Partner organizations can earn revenue on top of NadaPay's base rates by configuring a fee markup for each transaction type. The markup is expressed in basis points — 100 basis points equals 1%, so `50` means an additional 0.5% on every matching transaction processed by your child organizations. This endpoint is restricted to organizations with the `PARTNER` class; calling it from a standard organization will return an authorization error. Include the `x-idempotency-key` header to safely retry the request if you receive a network timeout.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the partner organization to configure.
+</ParamField>
+
+## Request body
+
+<ParamField body="txType" type="string" required>
+  The transaction type this markup applies to. Accepted values: `PAYOUT`, `DEPOSIT`, `FX_SWAP`.
+</ParamField>
+
+<ParamField body="markupBps" type="number" required>
+  The fee markup in basis points. For example, `50` equals 0.5%. Use `0` to remove a markup.
+</ParamField>
+
+<ParamField body="reason" type="string">
+  An optional internal note explaining the reason for this markup adjustment.
+</ParamField>
+
+## Headers
+
+<ParamField header="x-idempotency-key" type="string">
+  A unique UUID to prevent duplicate fee updates on retry.
+</ParamField>
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organizations/org-uuid-parent/fee-markup \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: a4b7c9d2-e3f1-4a5b-8c6d-7e8f9a0b1c2d' \
+  --data '{
+    "txType": "PAYOUT",
+    "markupBps": 50,
+    "reason": "Strategic adjustment — Q2 2026"
+  }'
+```
+
+## Response
+
+A `200` response confirms the updated fee markup configuration.
+
+<ResponseField name="txType" type="string">
+  The transaction type that was updated.
+</ResponseField>
+
+<ResponseField name="markupBps" type="number">
+  The applied markup in basis points.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of when the markup was last updated.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Fee markup configuration updated.",
+  "data": {
+    "txType": "PAYOUT",
+    "markupBps": 50,
+    "updatedAt": "2026-04-24T12:00:00.000Z"
+  }
+}
+```
+
+<Warning>
+  This endpoint is only available to organizations with the `PARTNER` class. Calls from standard organizations will be rejected with a `403` error.
+</Warning>

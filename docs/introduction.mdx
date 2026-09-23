@@ -1,0 +1,77 @@
+---
+title: 'NadaPay: Payment Infrastructure for Global Businesses'
+sidebarTitle: 'Introduction'
+description: 'NadaPay is developer-first payment infrastructure for accepting payments, issuing cards, managing wallets, and automating cross-border payouts at scale.'
+---
+
+NadaPay gives developers and businesses a single API platform to move money across global markets. Whether you are embedding a checkout widget in a web app, sending bulk payouts to beneficiaries, issuing virtual cards, or running a multi-tenant platform for sub-merchants, NadaPay provides the primitives you need without stitching together multiple payment providers.
+
+## Product Pillars
+
+NadaPay is organized into five capability areas. Each area has its own set of APIs and guides.
+
+<CardGroup cols={2}>
+  <Card title="Collection" icon="circle-dollar-to-slot" href="/docs/collection-overview">
+    Accept payments through the embeddable Checkout widget, shareable Payment Links, or bank-transfer Deposit Instructions.
+  </Card>
+  <Card title="Payouts" icon="paper-plane" href="/docs/payout-overview">
+    Send money to any beneficiary across supported corridors. Resolve bank accounts, generate quotes, and execute single or batch payouts.
+  </Card>
+  <Card title="Wallets" icon="wallet" href="/docs/wallet-overview">
+    Hold balances in multiple currencies. Each currency is a separate ledger with its own ID, balance, and transaction history.
+  </Card>
+  <Card title="Virtual Cards" icon="credit-card" href="/docs/card-overview">
+    Issue virtual cards tied to your NadaPay wallets. Set PINs, switch funding accounts, and retrieve secure card details.
+  </Card>
+  <Card title="Partner / Platform" icon="building" href="/docs/webhooks">
+    Register child organizations, set custom fee markups, manage KYC/KYB status, and build multi-tenant platforms on top of NadaPay infrastructure.
+  </Card>
+</CardGroup>
+
+## Who NadaPay Is For
+
+NadaPay is designed for:
+
+- **Developers** who need a well-structured REST API, clear error messages, and sandbox environments for safe integration testing.
+- **Businesses** that operate across multiple markets and need a single platform for inbound payments, outbound payouts, and financial account management.
+- **Platforms and marketplaces** that onboard sub-merchants and need to route settlements, apply fee markups, and manage organizations at scale.
+
+## API Base URL
+
+All API requests go to the following base URL:
+
+```
+https://core.nadapay.io/api/v1
+```
+
+Use this URL as the prefix for every endpoint documented in these guides. For example, to list your financial accounts you call `GET https://core.nadapay.io/api/v1/organizations/accounts`.
+
+## Sandbox and Production Environments
+
+NadaPay operates two fully isolated environments so you can build and test without touching real money.
+
+| Environment | API Key Prefix | Public Key Prefix | Purpose |
+|---|---|---|---|
+| Sandbox | `np_test_...` | `npk_test_...` | Integration testing with simulated transactions |
+| Production | `np_live_...` | `npk_live_...` | Real money and live customers |
+
+<Note>
+  Sandbox keys only work against the sandbox environment and production keys only work in production. There is no cross-environment access.
+</Note>
+
+Switch between environments by swapping your API key. No code changes are required beyond the key itself.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/docs/authentication">
+    Learn how to pass your API key, use public keys in the browser, and add idempotency keys.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/docs/quickstart">
+    Make your first API call and read a real response in under five minutes.
+  </Card>
+</CardGroup>
+
+## Support
+
+Schedule an intro call, get answers to integration questions, or troubleshoot issues with the NadaPay team. Email [support@nadapay.io](mailto:support@nadapay.io) to get started.

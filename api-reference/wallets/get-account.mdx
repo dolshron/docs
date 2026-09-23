@@ -1,0 +1,84 @@
+---
+title: "GET /organizations/accounts/:id — Get Financial Account"
+sidebarTitle: "Get Account"
+description: "Fetch complete details for a single financial account by ID, including its currency, NadaPay code, current balance, and operational status."
+---
+
+Use this endpoint when you need the full details of a specific wallet — for example, to confirm a wallet's balance before generating a payout quote, or to retrieve its NadaPay code for an internal transfer. You need the account's `id`, which you can obtain from the List Financial Accounts endpoint. The response returns the same shape as a single item in the list response, with the full account object.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/organizations/accounts/{accountId}`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/accounts/acc-uuid-123' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="accountId" type="string" required>
+  The unique identifier of the financial account (wallet) you want to retrieve. Obtain this from the List Financial Accounts response.
+</ParamField>
+
+## Response
+
+A successful `200 OK` response returns the full account object.
+
+```json
+{
+  "id": "acc-uuid-123",
+  "name": "Main USD Wallet",
+  "currency": "USD",
+  "nadapayCode": "WAL-001",
+  "balance": "10000.00",
+  "availableBalance": "9500.00",
+  "walletStatus": "ACTIVE",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2025-06-01T12:00:00Z"
+}
+```
+
+<ResponseField name="id" type="string">
+  Unique identifier for the financial account.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the wallet.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code for this wallet.
+</ResponseField>
+
+<ResponseField name="nadapayCode" type="string">
+  The NadaPay short code for this wallet — format `WAL-xxx`. You can share this with other NadaPay organizations to accept internal transfers.
+</ResponseField>
+
+<ResponseField name="balance" type="string">
+  Total balance held in this wallet, as a decimal string.
+</ResponseField>
+
+<ResponseField name="availableBalance" type="string">
+  The portion of the balance currently available for outgoing transactions.
+</ResponseField>
+
+<ResponseField name="walletStatus" type="string">
+  Current operational status of this wallet, e.g. `ACTIVE`, `SUSPENDED`.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp when the wallet was first created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of the most recent change to this wallet.
+</ResponseField>

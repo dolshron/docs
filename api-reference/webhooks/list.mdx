@@ -1,0 +1,66 @@
+---
+title: 'GET /organization/webhooks — List Registered Webhooks'
+sidebarTitle: 'List'
+description: 'Retrieve all webhook endpoints registered for your organization. Use this to audit subscriptions and verify which events each URL is listening to.'
+---
+
+Use this endpoint to retrieve all webhook endpoints you have registered under your organization. This is useful for auditing your event subscriptions, confirming which URLs are active, and building a webhook management interface. Results are paginated and sorted by `createdAt` descending by default.
+
+## Query parameters
+
+<ParamField query="page" type="number" default="1">
+  The page number to retrieve.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  The maximum number of webhooks to return per page.
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  The field to sort results by.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort direction. Accepted values: `asc`, `desc`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/webhooks?page=1&limit=10' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns a paginated list of webhook endpoint objects.
+
+<ResponseField name="data" type="array">
+  Array of webhook objects. Each item contains `id`, `url`, `events`, `status`, and `environment`. Note: the signing `secret` is not returned in list responses.
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  Pagination metadata including `page`, `limit`, and `total`.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Webhooks retrieved successfully.",
+  "data": [
+    {
+      "id": "wh_abc123",
+      "url": "https://yourapp.com/webhooks/nadapay",
+      "events": ["TRANSACTION.COMPLETED", "TRANSACTION.FAILED"],
+      "status": "ACTIVE",
+      "environment": "LIVE",
+      "createdAt": "2026-04-01T00:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1
+  }
+}
+```

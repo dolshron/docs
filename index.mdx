@@ -1,20 +1,60 @@
 ---
-title: "Introduction"
-description: "Welcome to your project"
+title: "NadaPay: Payment Infrastructure That Works"
+sidebarTitle: "Home"
+description: "Developer-first infrastructure for accepting payments, executing cross-border payouts, managing multi-currency wallets, and issuing virtual cards globally."
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+NadaPay gives you the complete payment infrastructure stack — from stablecoin-powered checkout to fiat settlement rails, multi-currency wallets, cross-border payout automation, and virtual card issuance. Everything you need to accept money, move money, and scale across global markets is available through a single, unified API.
 
-<Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="house" href="/docs/introduction">
+    Learn what NadaPay is, who it's for, and how the key APIs fit together.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/docs/quickstart">
+    Make your first API call and execute your first payout in minutes.
+  </Card>
+  <Card title="Authentication" icon="key" href="/docs/authentication">
+    Get your API keys and learn how to authenticate every request.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Full reference for every NadaPay endpoint with request and response examples.
+  </Card>
+</CardGroup>
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+## What You Can Build
+
+<CardGroup cols={2}>
+  <Card title="Accept Payments" icon="credit-card" href="/docs/collection-overview">
+    Embed Checkout, share payment links, or send invoices to collect money from customers.
+  </Card>
+  <Card title="Send Payouts" icon="paper-plane" href="/docs/payout-overview">
+    Execute single or batch payouts to bank accounts, mobile money, and crypto wallets worldwide.
+  </Card>
+  <Card title="Manage Wallets" icon="wallet" href="/docs/wallet-overview">
+    Hold, track, and move balances across multiple currencies in real time.
+  </Card>
+  <Card title="Issue Virtual Cards" icon="rectangle-history" href="/docs/card-overview">
+    Instantly issue corporate virtual cards tied to your NadaPay wallets.
+  </Card>
+</CardGroup>
+
+## Get Started in 4 Steps
+
+<Steps>
+  <Step title="Get your API key">
+    Sign up for a NadaPay account and retrieve your API key from the dashboard. Use `np_test_...` keys for sandbox and `np_live_...` keys for production.
+  </Step>
+  <Step title="Authenticate your requests">
+    Pass your key in the `x-api-key` header on every request. See [Authentication](/docs/authentication) for details.
+  </Step>
+  <Step title="Choose your integration path">
+    Collect inbound payments with [Checkout](/docs/accept-payments) or [Payment Links](/docs/payment-links), or send outbound payouts using the [Payout API](/docs/payout-overview).
+  </Step>
+  <Step title="Go live">
+    Swap in your `np_live_...` key, complete KYB verification, and start processing real transactions.
+  </Step>
+</Steps>
+
+<Note>
+  Need help? Email [support@nadapay.io](mailto:support@nadapay.io) to schedule an intro call or get integration support.
+</Note>

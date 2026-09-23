@@ -1,0 +1,198 @@
+---
+title: 'POST /transactions/quote — Generate a Payout Quote'
+sidebarTitle: 'Generate Quote'
+description: 'Generate a priced payout quote with locked-in rate and fees. The returned quoteId must be passed to Execute Transaction immediately — quotes expire.'
+---
+
+The quote endpoint prices a payout by locking in the exchange rate, fee, and finalized source and destination terms for a specific transaction. You must generate a quote before calling Execute Transaction — the `quoteId` returned here is required to execute. Quotes are time-limited, so you should call Execute Transaction immediately after receiving a successful quote response. Before calling this endpoint, confirm the source account has sufficient balance and that the amount has been validated against [transaction limits](/api-reference/transactions/get-limits).
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/quote
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID to prevent duplicate processing. |
+
+## Request Parameters
+
+<ParamField body="source" type="object" required>
+  Describes the account and asset you are sending from.
+
+  <Expandable title="source properties">
+    <ParamField body="accountId" type="string" required>
+      The NadaPay account ID to debit.
+    </ParamField>
+
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code of the source funds. For example, `"USD"`.
+    </ParamField>
+
+    <ParamField body="amount" type="number" required>
+      The amount to send, in the source currency's smallest unit (e.g. cents for USD).
+    </ParamField>
+
+    <ParamField body="rail" type="string">
+      Payment rail for the source side. For example, `"ACH"`.
+    </ParamField>
+
+    <ParamField body="chain" type="string">
+      Blockchain network if the source is a crypto asset. For example, `"Ethereum"` or `"Base"`.
+    </ParamField>
+
+    <ParamField body="address" type="string">
+      Wallet address for the source, when sending from a crypto account.
+    </ParamField>
+
+    <ParamField body="type" type="string">
+      Asset type. One of `"CRYPTO"` or `"FIAT"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="destination" type="object" required>
+  Describes the beneficiary account or address that will receive the funds.
+
+  <Expandable title="destination properties">
+    <ParamField body="beneficiaryAccountId" type="string">
+      The NadaPay beneficiary account ID for a pre-registered recipient.
+    </ParamField>
+
+    <ParamField body="accountId" type="string">
+      The NadaPay account ID of the destination, for internal transfers.
+    </ParamField>
+
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code the recipient will receive.
+    </ParamField>
+
+    <ParamField body="type" type="string" required>
+      Destination type. For example, `"BANK"`, `"MOBILE_MONEY"`, or `"CRYPTO"`.
+    </ParamField>
+
+    <ParamField body="accountNumber" type="string">
+      Bank or mobile money account number of the recipient.
+    </ParamField>
+
+    <ParamField body="bankCode" type="string">
+      Bank sort code or institution code for the destination bank.
+    </ParamField>
+
+    <ParamField body="country" type="string">
+      ISO 3166-1 alpha-2 or full country name of the destination. For example, `"NG"` or `"Nigeria"`.
+    </ParamField>
+
+    <ParamField body="chain" type="string">
+      Blockchain network for a crypto destination. For example, `"Base"` or `"Ethereum"`.
+    </ParamField>
+
+    <ParamField body="address" type="string">
+      Wallet address for a crypto destination.
+    </ParamField>
+
+    <ParamField body="name" type="string">
+      Full name of the recipient.
+    </ParamField>
+
+    <ParamField body="paymentMethod" type="string">
+      Human-readable payment method label. For example, `"Bank Transfer"` or `"Mobile Money"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs you want to attach to this quote for your own reference. These are passed through to the resulting transaction.
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/quote \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "source": {
+      "accountId": "acct_01HXXXXXXXXXXXXXXXXXX",
+      "currency": "USD",
+      "amount": 1000000,
+      "rail": "ACH",
+      "type": "FIAT"
+    },
+    "destination": {
+      "beneficiaryAccountId": "bene_01HXXXXXXXXXXXXXXXXXX",
+      "currency": "NGN",
+      "type": "BANK",
+      "accountNumber": "0123456789",
+      "bankCode": "044",
+      "country": "NG",
+      "name": "Amara Okafor",
+      "paymentMethod": "Bank Transfer"
+    },
+    "metadata": {
+      "internalOrderId": "ORD-9982"
+    }
+  }'
+```
+
+## Response Fields
+
+A `200` response returns the locked `quoteId` along with the finalized terms of the transaction.
+
+<ResponseField name="quoteId" type="string">
+  The unique identifier for this quote. Pass this directly to [Execute Transaction](/api-reference/transactions/execute).
+</ResponseField>
+
+<ResponseField name="rate" type="number">
+  The locked exchange rate for this quote.
+</ResponseField>
+
+<ResponseField name="fee" type="number">
+  The total fee charged for this transaction at the quoted rate.
+</ResponseField>
+
+<ResponseField name="sourceAmount" type="number">
+  The final debited amount from the source account.
+</ResponseField>
+
+<ResponseField name="destinationAmount" type="number">
+  The final credited amount the recipient will receive.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  ISO 8601 timestamp indicating when this quote expires. Execute the transaction before this time.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "quoteId": "qt_01HXXXXXXXXXXXXXXXXXX",
+  "rate": 1547.25,
+  "fee": 12.50,
+  "sourceAmount": 1000,
+  "destinationAmount": 1534750,
+  "expiresAt": "2024-09-23T17:45:00.000Z"
+}
+```
+
+<Warning>
+  **The `quoteId` expires.** Call [Execute Transaction](/api-reference/transactions/execute) immediately after receiving a quote — do not store the `quoteId` for later use. If the quote expires, generate a new one.
+</Warning>
+
+## Common Failure Reasons
+
+- The amount falls outside the supported limit range for the corridor — check limits first.
+- The source and destination configuration is not supported together.
+- Destination details do not match the selected rail (for example, a bank account number provided for a crypto rail).
+
+## What to Call Next
+
+- [Execute Transaction](/api-reference/transactions/execute) — submit the `quoteId` to move the funds.
+- [Check Transaction Limits](/api-reference/transactions/get-limits) — if the quote fails, verify the amount is within bounds.

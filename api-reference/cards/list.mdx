@@ -1,0 +1,136 @@
+---
+title: 'GET /organization/cards — List All Virtual Cards'
+sidebarTitle: 'List Cards'
+description: 'Retrieve a paginated list of all virtual cards issued under your organization, with status, last4, and linked wallet details for each card.'
+---
+
+This endpoint returns a paginated list of every virtual card issued under your organization. Each item in the response contains safe display metadata — the card's identifier, last four digits, current status, and the wallet it is linked to. No PAN or CVV is ever included in this response, so it is safe to use for dashboards, admin UIs, or any other customer-facing surface. If you need the full card number for a specific card, use [Get Secure Card Details](/api-reference/cards/get-secure-details) instead.
+
+## Endpoint
+
+```
+GET https://core.nadapay.io/api/v1/organization/cards
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Query Parameters
+
+<ParamField query="page" type="number" default="1">
+  The page number to retrieve. Starts at `1`.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Number of cards to return per page. Increase this to reduce round trips when you have many cards.
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  The field to sort results by. Defaults to `createdAt`.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort direction. Allowed values: `asc`, `desc`.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/cards?page=1&limit=10&sortBy=createdAt&sortOrder=desc' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status, e.g. `"Cards retrieved"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Paginated result wrapper.
+
+  <Expandable title="data fields">
+    <ResponseField name="items" type="array">
+      Array of card objects. Each object contains the fields below.
+
+      <Expandable title="card object fields">
+        <ResponseField name="id" type="string">
+          Unique card identifier.
+        </ResponseField>
+
+        <ResponseField name="last4" type="string">
+          Last four digits of the card number.
+        </ResponseField>
+
+        <ResponseField name="status" type="string">
+          Current card status: `"active"` or `"inactive"`.
+        </ResponseField>
+
+        <ResponseField name="nadapayCode" type="string">
+          The wallet code this card is currently linked to.
+        </ResponseField>
+
+        <ResponseField name="environment" type="string">
+          `"live"` or `"sandbox"`.
+        </ResponseField>
+
+        <ResponseField name="createdAt" type="string">
+          ISO 8601 timestamp of card creation.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="total" type="number">
+      Total number of cards across all pages.
+    </ResponseField>
+
+    <ResponseField name="page" type="number">
+      The current page number returned.
+    </ResponseField>
+
+    <ResponseField name="limit" type="number">
+      The number of results per page used for this response.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Cards retrieved",
+  "data": {
+    "items": [
+      {
+        "id": "card_01hw3x7k2r4p5q6m8n9v",
+        "last4": "4242",
+        "status": "active",
+        "nadapayCode": "NP-0001",
+        "environment": "live",
+        "createdAt": "2024-07-01T10:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+<Note>
+  This endpoint never exposes PAN or CVV data. If you need full card credentials for a specific card, use [Get Secure Card Details](/api-reference/cards/get-secure-details) — and only from a secure server-side context.
+</Note>

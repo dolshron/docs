@@ -1,0 +1,108 @@
+---
+title: 'POST /organizations/children — Register a Child Organization'
+sidebarTitle: 'Create Child'
+description: 'Register a new sub-business under your partner organization. Creates both the child organization and its owner user account in one call.'
+---
+
+If your integration uses NadaPay as a platform — managing multiple merchants or sub-businesses — you can register each one as a child organization under your account. A single API call creates both the child organization record and the associated owner user account. Each child organization then goes through its own KYB process before it can transact in production. Use the `x-idempotency-key` header to prevent duplicate registrations if the request is retried.
+
+## Request body
+
+<ParamField body="businessName" type="string" required>
+  The legal or trading name of the business being registered.
+</ParamField>
+
+<ParamField body="businessType" type="string" required>
+  The nature of the business, e.g. `Technology`, `Retail`, `Financial Services`.
+</ParamField>
+
+<ParamField body="businessEmail" type="string" required>
+  The primary email address for the child organization.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+  The business phone number in E.164 format.
+</ParamField>
+
+<ParamField body="address" type="string" required>
+  The business street address.
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  The business country, e.g. `USA`, `NG`.
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  The business city.
+</ParamField>
+
+<ParamField body="state" type="string" required>
+  The business state or province.
+</ParamField>
+
+<ParamField body="firstname" type="string" required>
+  First name of the primary contact person for this organization.
+</ParamField>
+
+<ParamField body="lastname" type="string" required>
+  Last name of the primary contact person for this organization.
+</ParamField>
+
+<ParamField body="website" type="string">
+  The business website URL, e.g. `https://www.acmecorp.com`.
+</ParamField>
+
+## Headers
+
+<ParamField header="x-idempotency-key" type="string">
+  A unique UUID to prevent duplicate organization creation if the request is retried.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/organizations/children \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: a4b7c9d2-e3f1-4a5b-8c6d-7e8f9a0b1c2d' \
+  --data '{
+    "businessName": "Acme Corp",
+    "businessType": "Technology",
+    "businessEmail": "info@acmecorp.com",
+    "phoneNumber": "+1234567890",
+    "address": "123 Main St",
+    "country": "USA",
+    "city": "New York",
+    "state": "NY",
+    "firstname": "Jane",
+    "lastname": "Doe",
+    "website": "https://www.acmecorp.com"
+  }'
+```
+
+## Response
+
+A `201` response returns the newly created user and organization IDs.
+
+<ResponseField name="userId" type="string">
+  The unique ID of the owner user account created for this child organization.
+</ResponseField>
+
+<ResponseField name="organizationId" type="string">
+  The unique ID of the newly registered child organization.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Child organization and owner user successfully created.",
+  "data": {
+    "userId": "user-uuid-123",
+    "organizationId": "org-uuid-456"
+  }
+}
+```
+
+<Note>
+  After registration, each child organization must complete its own KYB verification before it can process live transactions. Check its status with the [Verification Status](/api-reference/organizations/verification-status) endpoint.
+</Note>

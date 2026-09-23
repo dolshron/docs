@@ -1,0 +1,55 @@
+---
+title: "DELETE /beneficiaries/:id — Delete a Beneficiary"
+sidebarTitle: "Delete Beneficiary"
+description: "Permanently delete a beneficiary profile and all associated payout accounts. This action cannot be undone, so confirm before calling."
+---
+
+Use this endpoint to permanently remove a beneficiary profile from your organization. Deleting a beneficiary also removes all payout accounts attached to it. This operation is irreversible — if you want to stop using a beneficiary without losing the record, consider setting its status to `inactive` via the Update Beneficiary endpoint instead. Historical transaction records that reference the beneficiary's ID are not affected.
+
+## Request
+
+**DELETE** `https://core.nadapay.io/api/v1/beneficiaries/{id}`
+
+```bash
+curl --request DELETE \
+  --url 'https://core.nadapay.io/api/v1/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the beneficiary you want to permanently delete.
+</ParamField>
+
+## Response
+
+A successful `200 OK` response confirms the beneficiary and all associated accounts have been deleted.
+
+```json
+{
+  "data": {
+    "success": true,
+    "id": "ben_01HXXXXXXXXXXXXXXXXXX",
+    "message": "Beneficiary and associated data deleted."
+  }
+}
+```
+
+<ResponseField name="data.success" type="boolean">
+  `true` when the beneficiary was deleted successfully.
+</ResponseField>
+
+<ResponseField name="data.id" type="string">
+  The ID of the beneficiary that was deleted.
+</ResponseField>
+
+<ResponseField name="data.message" type="string">
+  A human-readable confirmation message.
+</ResponseField>

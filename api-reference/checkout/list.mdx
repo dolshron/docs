@@ -1,0 +1,126 @@
+---
+title: 'GET /organization/checkout — List Checkout Configurations'
+sidebarTitle: 'List Configs'
+description: 'Retrieve a paginated list of all checkout widget configurations saved under your organization, including IDs, branding, and environment details.'
+---
+
+This endpoint returns a paginated list of all the checkout widget configurations you have created under your organization. Each configuration object includes the unique `id` you need to reference when instantiating a checkout session or when calling the archive endpoint to disable a configuration. You can use the pagination parameters to work through large sets of configurations efficiently, and the `sortOrder` parameter to surface your most recently created or modified configurations first.
+
+## Endpoint
+
+```
+GET https://core.nadapay.io/api/v1/organization/checkout
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Query Parameters
+
+<ParamField query="page" type="number" default="1">
+  The page number to return. Starts at `1`.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Number of configurations to return per page.
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  Field to sort results by. Defaults to `createdAt`.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort direction. Allowed values: `asc`, `desc`.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/checkout?page=1&limit=10&sortBy=createdAt&sortOrder=desc' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the request completes successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status, e.g. `"Configurations retrieved successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Paginated result wrapper.
+
+  <Expandable title="data fields">
+    <ResponseField name="items" type="array">
+      Array of checkout configuration objects.
+
+      <Expandable title="configuration object fields">
+        <ResponseField name="id" type="string">
+          Unique configuration identifier. Use this when archiving a configuration or referencing it in a checkout session.
+        </ResponseField>
+
+        <ResponseField name="brandColor" type="string">
+          Primary brand color for the widget, as a hex color string.
+        </ResponseField>
+
+        <ResponseField name="environment" type="string">
+          `"live"` or `"sandbox"`.
+        </ResponseField>
+
+        <ResponseField name="createdAt" type="string">
+          ISO 8601 timestamp of when this configuration was created.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="total" type="number">
+      Total number of configurations across all pages.
+    </ResponseField>
+
+    <ResponseField name="page" type="number">
+      The current page number returned.
+    </ResponseField>
+
+    <ResponseField name="limit" type="number">
+      Number of results per page used for this response.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Configurations retrieved successfully",
+  "data": {
+    "items": [
+      {
+        "id": "chk_01hw3x7k2r4p5q6m8n9v",
+        "brandColor": "#7C3AED",
+        "environment": "live",
+        "createdAt": "2024-07-01T10:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+<Note>
+  Use this endpoint to look up the `id` of a configuration you want to archive or reference. To permanently disable a configuration, pass its `id` to the [Archive Checkout Configuration](/api-reference/checkout/archive) endpoint.
+</Note>

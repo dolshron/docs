@@ -1,24 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "NadaPay",
+  "projectType": "saas",
+  "projectName": "NadaPay",
+  "projectDescription": "NadaPay is a developer-first payment infrastructure platform for accepting payments, executing cross-border payouts, managing multi-currency wallets, and issuing virtual cards.",
   "theme": "luma",
-  "logo": {
-    "light": "https://media.brand.dev/ba2c0b09-bd45-4fb9-86d1-1496821eeb7a.svg",
-    "dark": "https://media.brand.dev/ba2c0b09-bd45-4fb9-86d1-1496821eeb7a.svg"
-  },
-  "favicon": "https://media.brand.dev/b190199b-c077-4020-9b6d-52ec8c5db6a0.png",
-  "colors": {
-    "primary": "#baef58",
-    "light": "#195557",
-    "dark": "#8ca4a4"
-  },
-  "navbar": {
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "https://nadapay.io"
-    }
-  },
+  "primaryColor": "#baef58",
+  "lightColor": "#195557",
+  "darkColor": "#8ca4a4",
   "navigation": {
     "tabs": [
       {
@@ -224,9 +211,37 @@
       }
     ]
   },
-  "footer": {
-    "socials": {
-      "website": "https://nadapay.io"
-    }
-  }
+  "keyFeatures": [
+    "Checkout payment integration with JavaScript SDK",
+    "Cross-border payouts to bank accounts, mobile money, and crypto wallets",
+    "Multi-currency wallet management with deposit instructions",
+    "Virtual card issuance and lifecycle management",
+    "Payment links and hosted invoice flows",
+    "Beneficiary management for reusable payout destinations",
+    "Real-time webhook event notifications",
+    "Child organization and partner markup support",
+    "KYC/KYB verification status tracking",
+    "Exchange rate and transaction limit queries"
+  ],
+  "publicApiSurface": [
+    "POST /transactions/execute",
+    "POST /transactions/batch-execute",
+    "POST /transactions/quote",
+    "POST /transactions/deposit-instructions",
+    "POST /transactions/networks",
+    "GET /transactions/rate",
+    "GET /transactions/limits",
+    "POST /transactions/resolve-bank-account",
+    "POST /beneficiaries",
+    "POST /beneficiaries/:id/accounts",
+    "POST /organization/checkout",
+    "POST /organization/payment-links",
+    "POST /organization/invoices",
+    "POST /organization/customers",
+    "POST /organization/products",
+    "POST /organization/cards",
+    "POST /organization/webhooks",
+    "POST /organizations/children",
+    "GET /organizations/verification/:type"
+  ]
 }

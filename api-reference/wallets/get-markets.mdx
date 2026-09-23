@@ -1,0 +1,176 @@
+---
+title: "GET /organization/markets — Get Available Markets"
+sidebarTitle: "Get Markets"
+description: "Retrieve the list of active currency corridors and payment channels available to your organization, including source/destination currencies and providers."
+---
+
+Use this endpoint to discover which currency corridors NadaPay currently supports for your organization. Markets represent the combinations of source currency, destination currency, and channel (collection, payout, or swap) that you can transact across. Corridor availability can change per provider, so you should query this endpoint dynamically rather than relying on a hardcoded list — corridors can be activated or paused at any time. Filter by `channel` to get the exact set relevant to your flow direction, and by `isActive` to exclude any currently paused corridors.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/organization/markets`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/markets' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="channel" type="string">
+  Filter markets by payment channel. Use `collection` for inbound flows, `payout` for outbound flows, or `swap` for currency conversion flows.
+
+  Allowed values: `collection`, `payout`, `swap`
+</ParamField>
+
+<ParamField query="isActive" type="boolean">
+  When set to `true`, only active corridors are returned. When set to `false`, all corridors including paused ones are returned.
+
+  Allowed values: `true`, `false`
+</ParamField>
+
+## Filtered request examples
+
+**Payout corridors only**
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/markets?channel=payout&isActive=true' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+**All collection corridors**
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/markets?channel=collection' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+**Swap corridors only**
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organization/markets?channel=swap&isActive=true' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+## Response
+
+A successful `200 OK` response returns an array of market objects describing the available corridors.
+
+```json
+[
+  {
+    "id": "market_01HXXXXXXXXXXXXXXXXXX",
+    "sourceCurrency": "USD",
+    "destinationCurrency": "NGN",
+    "channel": "payout",
+    "isActive": true,
+    "providers": [
+      {
+        "id": "provider_001",
+        "name": "NadaPay Rails",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "id": "market_01HYYYYYYYYYYYYYYYYYY",
+    "sourceCurrency": "USD",
+    "destinationCurrency": "KES",
+    "channel": "payout",
+    "isActive": true,
+    "providers": [
+      {
+        "id": "provider_002",
+        "name": "NadaPay Rails",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "id": "market_01HZZZZZZZZZZZZZZZZZ",
+    "sourceCurrency": "USD",
+    "destinationCurrency": "USDC",
+    "channel": "swap",
+    "isActive": true,
+    "providers": []
+  }
+]
+```
+
+<ResponseField name="id" type="string">
+  Unique identifier for this market corridor.
+</ResponseField>
+
+<ResponseField name="sourceCurrency" type="string">
+  The currency your organization sends or holds on this corridor.
+</ResponseField>
+
+<ResponseField name="destinationCurrency" type="string">
+  The currency the recipient receives on this corridor.
+</ResponseField>
+
+<ResponseField name="channel" type="string">
+  The payment channel for this corridor: `collection` (inbound), `payout` (outbound), or `swap` (conversion).
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Whether this corridor is currently available. Re-check this value at the point of transaction — corridors can be paused after your initial query.
+</ResponseField>
+
+<ResponseField name="providers" type="array">
+  Array of payment provider objects that can execute transactions on this corridor.
+</ResponseField>
+
+<ResponseField name="providers[].id" type="string">
+  Unique identifier for the provider on this corridor.
+</ResponseField>
+
+<ResponseField name="providers[].name" type="string">
+  Display name of the provider.
+</ResponseField>
+
+<ResponseField name="providers[].isActive" type="boolean">
+  Whether this specific provider is currently active on the corridor.
+</ResponseField>
+
+## Supported currencies
+
+NadaPay currently supports the following currencies across collection, payout, and swap corridors. Always confirm availability against a live response from this endpoint before relying on a specific currency in production.
+
+| Code | Type |
+|------|------|
+| USD | Fiat |
+| EUR | Fiat |
+| GBP | Fiat |
+| NGN | Fiat |
+| GHS | Fiat |
+| KES | Fiat |
+| ZAR | Fiat |
+| UGX | Fiat |
+| TZS | Fiat |
+| RWF | Fiat |
+| XOF | Fiat |
+| XAF | Fiat |
+| CDF | Fiat |
+| MWK | Fiat |
+| ZMW | Fiat |
+| BWP | Fiat |
+| AED | Fiat |
+| BRL | Fiat |
+| MXN | Fiat |
+| USDC | Stablecoin |
+| USDT | Stablecoin |

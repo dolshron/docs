@@ -1,0 +1,100 @@
+---
+title: 'POST /transactions/resolve-bank-account — Verify Account'
+sidebarTitle: 'Resolve Bank'
+description: 'Verify a bank account number against a network and retrieve the account holder name before creating a beneficiary on any bank-based payout rail.'
+---
+
+The resolve bank account endpoint looks up an account number against a payment network and returns the verified account holder name. You should call this before adding any bank-based beneficiary account so you can confirm the destination details are correct and show the resolved name to your user for explicit confirmation. Skipping this step increases the risk of misdirected transfers on bank rails, which are difficult and slow to reverse.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/resolve-bank-account
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID to prevent duplicate processing. |
+
+## Request Parameters
+
+<ParamField body="accountNumber" type="string" required>
+  The bank or mobile money account number you want to verify. For example, `"0123456789"`.
+</ParamField>
+
+<ParamField body="networkId" type="string" required>
+  The NadaPay network identifier for the bank or provider you are resolving against. Obtain this from the [Get Networks](/api-reference/transactions/get-networks) endpoint. For example, `"ntwk_01HXXXXXXXXXXXXXXXXXX"`.
+</ParamField>
+
+<ParamField body="bankCode" type="string">
+  The institution or sort code for the destination bank, where required by the network.
+</ParamField>
+
+<ParamField body="country" type="string">
+  ISO 3166-1 alpha-2 country code for the bank. For example, `"GH"` or `"NG"`.
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/resolve-bank-account \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "accountNumber": "0123456789",
+    "networkId": "ntwk_01HXXXXXXXXXXXXXXXXXX",
+    "bankCode": "044",
+    "country": "NG"
+  }'
+```
+
+## Response Fields
+
+A `200` response returns the resolved account details and verification status.
+
+<ResponseField name="accountName" type="string">
+  The verified full name of the account holder as returned by the bank or provider.
+</ResponseField>
+
+<ResponseField name="accountNumber" type="string">
+  The account number echoed back from the resolution, confirming which account was resolved.
+</ResponseField>
+
+<ResponseField name="bankName" type="string">
+  The name of the bank or payment provider that holds the account.
+</ResponseField>
+
+<ResponseField name="verified" type="boolean">
+  `true` if the account was successfully resolved and verified; `false` if the account exists but could not be fully confirmed.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "accountName": "Amara Okafor",
+  "accountNumber": "0123456789",
+  "bankName": "Access Bank",
+  "verified": true
+}
+```
+
+<Warning>
+  **Always resolve before creating a beneficiary on bank rails.** Never skip this step for bank account payouts. Once you receive the resolved `accountName`, display it to the operator or end user and require explicit confirmation that it matches the intended recipient before proceeding. Transfers sent to incorrect bank accounts are difficult to reverse.
+</Warning>
+
+## Common Failure Reasons
+
+- The `accountNumber` and `networkId` combination does not match a valid account.
+- The destination account details are invalid or formatted incorrectly.
+- The selected network does not support the account type you are resolving.
+
+## What to Call Next
+
+- Create a beneficiary account using the verified `accountName` and `accountNumber` returned here.
+- [Get Networks](/api-reference/transactions/get-networks) — if you need to look up the correct `networkId` for the destination bank.

@@ -1,0 +1,77 @@
+---
+title: 'PATCH /organization/webhooks/:id — Update a Webhook'
+sidebarTitle: 'Update'
+description: 'Update a webhook endpoint URL, event subscriptions, or status. Send only the fields you want to change — all other settings remain unchanged.'
+---
+
+Use this endpoint to change a webhook's delivery URL, modify the events it subscribes to, or toggle its `ACTIVE`/`INACTIVE` status. For example, you can temporarily disable a webhook during maintenance by setting `status: "INACTIVE"` and re-enable it when your endpoint is back online. All fields are optional — send only what you need to change.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the webhook to update.
+</ParamField>
+
+## Request body
+
+<ParamField body="url" type="string">
+  The updated delivery URL. Must be a valid HTTPS endpoint.
+</ParamField>
+
+<ParamField body="events" type="array">
+  Updated list of event types to subscribe to. Replaces the existing subscription list entirely.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Updated webhook status. Accepted values: `ACTIVE`, `INACTIVE`.
+</ParamField>
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organization/webhooks/wh_abc123 \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "events": ["TRANSACTION.COMPLETED", "TRANSACTION.FAILED", "VERIFICATION.COMPLETED"],
+    "status": "ACTIVE"
+  }'
+```
+
+## Response
+
+A `200` response returns the updated webhook configuration.
+
+<ResponseField name="id" type="string">
+  The webhook's unique identifier.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  The current delivery URL.
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  The updated list of subscribed event types.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current webhook status.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Webhook updated successfully.",
+  "data": {
+    "id": "wh_abc123",
+    "url": "https://yourapp.com/webhooks/nadapay",
+    "events": [
+      "TRANSACTION.COMPLETED",
+      "TRANSACTION.FAILED",
+      "VERIFICATION.COMPLETED"
+    ],
+    "status": "ACTIVE",
+    "updatedAt": "2026-04-25T10:00:00.000Z"
+  }
+}
+```

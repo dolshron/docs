@@ -1,0 +1,166 @@
+---
+title: 'POST /transactions/execute — Execute a Transaction'
+sidebarTitle: 'Execute'
+description: 'Execute a payout using a valid quoteId. Source and destination values must match the priced quote exactly. Returns a transaction object with reference IDs.'
+---
+
+The execute endpoint initiates a payout by submitting a pre-generated quote for processing. You must have a valid, unexpired `quoteId` from the [Generate Quote](/api-reference/transactions/generate-quote) endpoint before calling this. The source and destination values you pass here must match what you supplied when generating the quote — any mismatch will result in a validation error. Once the request succeeds, save the returned transaction identifiers immediately for monitoring and reconciliation.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/execute
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+| `x-idempotency-key` | Yes | A unique UUID to prevent duplicate processing. Use a different key from the one used for the quote. |
+
+## Request Parameters
+
+<ParamField body="quoteId" type="string">
+  The `quoteId` returned by [Generate Quote](/api-reference/transactions/generate-quote). The quote must still be within its expiry window.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  The purpose of the transaction. Must be one of the following enum values:
+
+  `gift` · `bills` · `groceries` · `travel` · `health` · `entertainment` · `housing` · `school-fees` · `Conversion` · `other`
+</ParamField>
+
+<ParamField body="reasonDescription" type="string">
+  A free-text description of the reason. Required when `reason` is `"other"`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs attached to this transaction. Useful for storing your internal order or reference IDs.
+</ParamField>
+
+<ParamField body="source" type="object" required>
+  Identifies the source account to debit.
+
+  <Expandable title="source properties">
+    <ParamField body="accountId" type="string" required>
+      The NadaPay account ID to debit for this transaction.
+    </ParamField>
+
+    <ParamField body="nadapayCode" type="string">
+      The NadaPay wallet code for the source account. For example, `"WAL-123"`.
+    </ParamField>
+
+    <ParamField body="amount" type="number" required>
+      The amount to debit, in the source currency's smallest unit. Must match the amount in the quote.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="destination" type="object" required>
+  Identifies the beneficiary account that will receive the funds.
+
+  <Expandable title="destination properties">
+    <ParamField body="beneficiaryAccountId" type="string">
+      The NadaPay beneficiary account ID for the recipient.
+    </ParamField>
+
+    <ParamField body="accountId" type="string">
+      The NadaPay internal account ID for the destination, used for internal transfers.
+    </ParamField>
+
+    <ParamField body="nadapayCode" type="string">
+      The NadaPay wallet code of the destination account. For example, `"WAL-456"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/execute \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-idempotency-key: YOUR_UNIQUE_UUID" \
+  -d '{
+    "quoteId": "qt_01HXXXXXXXXXXXXXXXXXX",
+    "reason": "gift",
+    "reasonDescription": "",
+    "metadata": {
+      "internalOrderId": "ORD-9982"
+    },
+    "source": {
+      "accountId": "acct_01HXXXXXXXXXXXXXXXXXX",
+      "nadapayCode": "WAL-123",
+      "amount": 1000000
+    },
+    "destination": {
+      "beneficiaryAccountId": "bene_01HXXXXXXXXXXXXXXXXXX",
+      "accountId": "acct_01HYYYYYYYYYYYYYYYYYY",
+      "nadapayCode": "WAL-456"
+    }
+  }'
+```
+
+## Response Fields
+
+A `201` response means the transaction was successfully accepted and queued for execution.
+
+<ResponseField name="id" type="string">
+  The unique NadaPay transaction ID. Store this for status polling and reconciliation.
+</ResponseField>
+
+<ResponseField name="reference" type="string">
+  A human-readable reference code for this transaction, suitable for display in receipts and support queries.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The initial transaction status. Typically `"PENDING"` immediately after execution.
+</ResponseField>
+
+<ResponseField name="quoteId" type="string">
+  The `quoteId` this transaction was executed against, echoed back for confirmation.
+</ResponseField>
+
+<ResponseField name="sourceAmount" type="number">
+  The amount debited from the source account.
+</ResponseField>
+
+<ResponseField name="destinationAmount" type="number">
+  The amount the recipient will receive.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the transaction was created.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "id": "txn_01HXXXXXXXXXXXXXXXXXX",
+  "reference": "NDP-TXN-20240923-XYZ9",
+  "status": "PENDING",
+  "quoteId": "qt_01HXXXXXXXXXXXXXXXXXX",
+  "sourceAmount": 1000000,
+  "destinationAmount": 1534750,
+  "createdAt": "2024-09-23T17:44:00.000Z"
+}
+```
+
+## Common Errors
+
+| Status | Cause | Fix |
+|--------|-------|-----|
+| `400` | `quoteId` is missing or malformed. | Verify you are passing the exact `quoteId` returned by Generate Quote. |
+| `409` | The `quoteId` has already been executed. | Each quote can only be executed once. Generate a new quote. |
+| `422` | Source/destination values don't match the priced quote. | Ensure `amount`, `accountId`, and destination identifiers match the quote exactly. |
+| `422` | Quote has expired. | Quotes are time-limited — generate a fresh quote and execute immediately. |
+| `422` | Insufficient balance. | Check the source account balance before executing. |
+| `403` | Transaction blocked by corridor or compliance conditions. | Contact [support@nadapay.io](mailto:support@nadapay.io) for corridor-specific guidance. |
+
+## What to Call Next
+
+- Monitor the transaction status via webhook events or poll the transaction status endpoint.
+- [Get Deposit Instructions](/api-reference/transactions/deposit-instructions) — if you need to fund the source wallet before executing.

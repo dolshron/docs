@@ -1,0 +1,98 @@
+---
+title: "GET /organizations/accounts — List Financial Accounts"
+sidebarTitle: "List Accounts"
+description: "Retrieve all financial accounts (wallets) your organization holds, optionally filtered by status or currency, with balance and identifier details."
+---
+
+Your organization holds one wallet per currency — each wallet has its own ID, balance, NadaPay code, and ledger. Use this endpoint to retrieve all wallets at once, for example to render a balance dashboard or to discover which currencies your organization is currently active in. You can narrow the results by passing a `status` or `currency` query parameter. The response returns an array of account objects, each containing the wallet ID you use in downstream calls.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/organizations/accounts`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/accounts' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="status" type="string">
+  Filter accounts by status. For example, pass `ACTIVE` to see only active wallets.
+</ParamField>
+
+<ParamField query="currency" type="string">
+  Filter accounts by currency code, e.g. `USD`, `NGN`, `USDC`. Use this when you only need wallets for a specific currency.
+</ParamField>
+
+## Filtered request example
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/accounts?status=ACTIVE&currency=USD' \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'accept: application/json'
+```
+
+## Response
+
+A successful `200 OK` response returns an array of financial account objects.
+
+```json
+[
+  {
+    "id": "acc-uuid-123",
+    "name": "Main USD Wallet",
+    "currency": "USD",
+    "nadapayCode": "WAL-001",
+    "balance": "10000.00",
+    "availableBalance": "9500.00",
+    "walletStatus": "ACTIVE"
+  },
+  {
+    "id": "acc-uuid-456",
+    "name": "NGN Wallet",
+    "currency": "NGN",
+    "nadapayCode": "WAL-002",
+    "balance": "5000000.00",
+    "availableBalance": "5000000.00",
+    "walletStatus": "ACTIVE"
+  }
+]
+```
+
+<ResponseField name="id" type="string">
+  Unique identifier for the financial account. Use this when fetching account details, querying the ledger, or upgrading to a virtual account.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the wallet.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code for this wallet, e.g. `USD`, `NGN`, `USDC`.
+</ResponseField>
+
+<ResponseField name="nadapayCode" type="string">
+  The NadaPay short code for this wallet — format `WAL-xxx`. Share this code with other NadaPay organizations to receive internal transfers.
+</ResponseField>
+
+<ResponseField name="balance" type="string">
+  Total balance of the wallet as a decimal string.
+</ResponseField>
+
+<ResponseField name="availableBalance" type="string">
+  The portion of the balance available for outgoing transactions, excluding any reserved or pending amounts.
+</ResponseField>
+
+<ResponseField name="walletStatus" type="string">
+  Current operational status of the wallet, e.g. `ACTIVE`, `SUSPENDED`.
+</ResponseField>

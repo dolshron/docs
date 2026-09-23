@@ -1,0 +1,243 @@
+---
+title: "POST /beneficiaries — Create a Beneficiary Profile"
+sidebarTitle: "Create Beneficiary"
+description: "Register a reusable recipient profile with a name, contact details, and a payout destination so you can reference it in future transactions."
+---
+
+Before you send a payout you need a beneficiary — a named recipient profile that stores the destination details NadaPay uses to route funds. You create a beneficiary once, then reuse its ID across quotes and transactions. For bank-based payouts, resolve the destination account first so NadaPay can confirm the account holder name before you commit.
+
+## Request
+
+**POST** `https://core.nadapay.io/api/v1/beneficiaries`
+
+Include your API key and a unique idempotency key on every create request. The idempotency key ensures that retrying a failed network call does not create a duplicate beneficiary.
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/beneficiaries \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Amara Diallo",
+    "email": "amara.diallo@example.com",
+    "phone": "+2348012345678",
+    "currency": "NGN",
+    "type": "EXTERNAL_BANK",
+    "details": {
+      "accountNumber": "0123456789",
+      "accountName": "Amara Diallo",
+      "networkId": "net_gtbank_ng",
+      "country": "NG",
+      "rail": "BANK_TRANSFER"
+    }
+  }'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+<ParamField header="x-idempotency-key" type="string" required>
+  A unique UUID you generate for this request. NadaPay uses this to deduplicate retries — reuse the same key to safely retry without creating a duplicate beneficiary.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="name" type="string" required>
+  Full name of the beneficiary. This value is stored on the profile and displayed in the dashboard.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Beneficiary's email address. Optional but recommended for notifications and audit trails.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Beneficiary's phone number in international format, e.g. `+2348012345678`.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code for the payout destination, e.g. `NGN`, `USD`, `KES`.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Destination type. One of `INTERNAL` (another NadaPay wallet), `EXTERNAL_BANK` (bank account), or `EXTERNAL_WALLET` (mobile money or crypto).
+
+  Allowed values: `INTERNAL`, `EXTERNAL_BANK`, `EXTERNAL_WALLET`
+</ParamField>
+
+<ParamField body="details" type="object" required>
+  Payout destination details. The fields you include depend on the rail you are registering. See the rail-specific field tables below.
+
+  <Expandable title="details fields by rail">
+    **Bank Transfer / ACH**
+
+    <ParamField body="details.accountNumber" type="string">
+      Recipient bank account number.
+    </ParamField>
+
+    <ParamField body="details.accountName" type="string">
+      Name on the bank account as it appears at the bank.
+    </ParamField>
+
+    <ParamField body="details.networkId" type="string">
+      Provider or banking network identifier returned by the Get Supported Networks endpoint.
+    </ParamField>
+
+    <ParamField body="details.country" type="string">
+      ISO 3166-1 alpha-2 country code for the destination bank, e.g. `NG`, `GH`, `KE`.
+    </ParamField>
+
+    <ParamField body="details.rail" type="string">
+      Payout rail, e.g. `BANK_TRANSFER`, `ACH`.
+    </ParamField>
+
+    <ParamField body="details.bankCode" type="string">
+      Bank code — include when the destination banking scheme requires it.
+    </ParamField>
+
+    <ParamField body="details.iban" type="string">
+      International Bank Account Number — required for IBAN-based corridors.
+    </ParamField>
+
+    <ParamField body="details.swiftCode" type="string">
+      SWIFT/BIC code for international wire routing.
+    </ParamField>
+
+    <ParamField body="details.sortCode" type="string">
+      UK sort code — required for GBP bank transfers.
+    </ParamField>
+
+    <ParamField body="details.routingNumber" type="string">
+      ACH routing number — required for US ACH transfers.
+    </ParamField>
+
+    <ParamField body="details.clabe" type="string">
+      18-digit CLABE number — required for Mexican corridors.
+    </ParamField>
+
+    <ParamField body="details.pixKey" type="string">
+      PIX key — required for Brazilian PIX payouts.
+    </ParamField>
+
+    <ParamField body="details.cpf" type="string">
+      Brazilian tax ID — required when the corridor demands recipient CPF.
+    </ParamField>
+
+    **Mobile Money**
+
+    <ParamField body="details.phoneNumber" type="string">
+      Recipient's mobile money number in international format.
+    </ParamField>
+
+    <ParamField body="details.provider" type="string">
+      Mobile money provider name, e.g. `MTN`, `Airtel`.
+    </ParamField>
+
+    **Crypto**
+
+    <ParamField body="details.chain" type="string">
+      Blockchain network, e.g. `ETHEREUM`, `POLYGON`, `TRON`.
+    </ParamField>
+
+    <ParamField body="details.address" type="string">
+      Recipient wallet address on the specified chain.
+    </ParamField>
+
+    **NadaPay Internal**
+
+    <ParamField body="details.nadapayCode" type="string">
+      NadaPay wallet code of the recipient — format `WAL-xxx`. Use when `type` is `INTERNAL`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+A successful `201 Created` response returns the new beneficiary object. Save the `id` — you will use it when adding payout accounts, generating quotes, and executing transactions.
+
+```json
+{
+  "data": {
+    "id": "ben_01HXXXXXXXXXXXXXXXXXX",
+    "name": "Amara Diallo",
+    "type": "EXTERNAL_BANK",
+    "status": "active",
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+}
+```
+
+<ResponseField name="data.id" type="string">
+  Unique beneficiary identifier. Reference this ID in subsequent API calls.
+</ResponseField>
+
+<ResponseField name="data.name" type="string">
+  The name you provided when creating the beneficiary.
+</ResponseField>
+
+<ResponseField name="data.type" type="string">
+  The destination type: `INTERNAL`, `EXTERNAL_BANK`, or `EXTERNAL_WALLET`.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Current status of the beneficiary profile, e.g. `active`.
+</ResponseField>
+
+<ResponseField name="data.created_at" type="string">
+  ISO 8601 timestamp when the beneficiary was created.
+</ResponseField>
+
+## Error Response
+
+```json
+{
+  "statusCode": 500,
+  "message": "Internal server error"
+}
+```
+
+## Rail-specific curl examples
+
+**Mobile money (MTN Ghana)**
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/beneficiaries \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Kofi Mensah",
+    "phone": "+233241234567",
+    "currency": "GHS",
+    "type": "EXTERNAL_WALLET",
+    "details": {
+      "phoneNumber": "+233241234567",
+      "provider": "MTN",
+      "country": "GH",
+      "networkId": "net_mtn_gh"
+    }
+  }'
+```
+
+**Crypto (USDC on Polygon)**
+
+```bash
+curl --request POST \
+  --url https://core.nadapay.io/api/v1/beneficiaries \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Crypto Recipient",
+    "currency": "USDC",
+    "type": "EXTERNAL_WALLET",
+    "details": {
+      "chain": "POLYGON",
+      "address": "0xAbCd1234567890AbCd1234567890AbCd12345678"
+    }
+  }'
+```

@@ -1,0 +1,132 @@
+---
+title: 'PATCH /organization/payment-links/:id — Update Payment Link'
+sidebarTitle: 'Update'
+description: 'Update the name, description, status, or redirect URL of an existing payment link without changing its shareable URL or payment configuration.'
+---
+
+Use this endpoint to make changes to an existing payment link without altering its shareable URL or breaking any existing customer-facing references. You can update the link's display name, description, redirect URL, and active status. This is the recommended approach when you need to modify a link that is already in circulation — for example, to update the redirect destination after a site migration, or to temporarily deactivate a link without archiving it. Send only the fields you want to change; omitted fields remain unchanged.
+
+## Endpoint
+
+```
+PATCH https://core.nadapay.io/api/v1/organization/payment-links/:id
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the payment link you want to update. Use [List Payment Links](/api-reference/payment-links/list) to find the correct `id` if needed.
+</ParamField>
+
+## Request Body
+
+All body fields are optional. Include only the fields you want to change.
+
+<ParamField body="name" type="string">
+  Updated internal display name for this payment link.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated description shown to the customer on the payment page.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Updated status for the link. Use this to activate or deactivate the link programmatically. Check the API for allowed status values.
+</ParamField>
+
+<ParamField body="redirectUrl" type="string">
+  Updated post-payment redirect URL. The customer is sent here after a successful payment.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organization/payment-links/pl_abc123 \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "name": "Consultation Fee — Updated",
+    "redirectUrl": "https://yoursite.com/new-thank-you"
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the payment link is updated successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Payment link updated successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The updated payment link object reflecting your changes.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      Unique payment link identifier.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      The updated display name.
+    </ResponseField>
+
+    <ResponseField name="description" type="string">
+      The updated description, if changed.
+    </ResponseField>
+
+    <ResponseField name="url" type="string">
+      The shareable payment link URL — unchanged by this operation.
+    </ResponseField>
+
+    <ResponseField name="redirectUrl" type="string">
+      The updated redirect URL, if changed.
+    </ResponseField>
+
+    <ResponseField name="isActive" type="boolean">
+      The current active status of the link.
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of the original link creation.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Payment link updated successfully",
+  "data": {
+    "id": "pl_abc123",
+    "name": "Consultation Fee — Updated",
+    "description": null,
+    "url": "https://pay.nadapay.io/consultation-fee",
+    "redirectUrl": "https://yoursite.com/new-thank-you",
+    "isActive": true,
+    "createdAt": "2024-07-01T10:00:00.000Z"
+  }
+}
+```
+
+<Note>
+  Updating a payment link never changes its shareable `url`. Any customer who already has the link can still use it — the update only affects the fields you specify.
+</Note>

@@ -1,0 +1,171 @@
+---
+title: 'Manage Customer Profiles in NadaPay'
+sidebarTitle: 'Customers'
+description: 'Create and manage customer profiles that serve as the identity layer for invoices and payment links, with unique email enforcement per organization.'
+---
+
+Customers are the identity layer of NadaPay's merchant tooling. A customer record stores the name, email, and contact details of the person or business you are billing, and you attach that record to invoices and payment links so that NadaPay can associate payments with the correct counterparty. Every customer email must be unique within your organization — if you attempt to create a second customer with the same email, the API returns a `409` and you should look up the existing record instead.
+
+## Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/organization/customers` | Create a customer |
+| `GET` | `/organization/customers` | List all customers |
+| `GET` | `/organization/customers/:id` | Fetch a single customer |
+| `PATCH` | `/organization/customers/:id` | Update a customer |
+| `DELETE` | `/organization/customers/:id` | Delete a customer |
+
+---
+
+## Create a customer
+
+### Endpoint
+
+```
+POST /organization/customers
+```
+
+### Request
+
+```bash
+curl --request POST \
+  --url $baseUrl/organization/customers \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Biffco Enterprise",
+    "email": "biffco@enterprise.com",
+    "phoneNumber": "+2348000000000",
+    "address": "123 Main Street",
+    "metadata": {}
+  }'
+```
+
+### Request fields
+
+<ParamField body="name" type="string" required>
+  The customer's full name or business name. This appears on invoices and payment links.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  The customer's email address. Must be unique within your organization. If a customer with this email already exists, the API returns `409 Conflict` — use the list or fetch endpoint to retrieve the existing record.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string">
+  The customer's phone number in international format (e.g. `+2348000000000`).
+</ParamField>
+
+<ParamField body="address" type="string">
+  The customer's physical or mailing address.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  An arbitrary key-value object for storing additional information about the customer. NadaPay does not interpret this data — use it to attach your own internal references or attributes.
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Customer created successfully",
+  "data": {
+    "id": "cus_abc123",
+    "name": "Biffco Enterprise",
+    "email": "biffco@enterprise.com",
+    "phone": "+2348000000000",
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+<Note>
+  A `409 Conflict` response means a customer with that email address already exists in your organization. Look up the existing customer using `GET /organization/customers` instead of creating a duplicate.
+</Note>
+
+---
+
+## List customers
+
+Retrieve all customer profiles under your organization.
+
+### Request
+
+```bash
+curl --request GET \
+  --url $baseUrl/organization/customers \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+---
+
+## Fetch a customer
+
+Retrieve a single customer record by ID.
+
+### Request
+
+```bash
+curl --request GET \
+  --url $baseUrl/organization/customers/{id} \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+---
+
+## Update a customer
+
+Update one or more fields on an existing customer profile.
+
+### Request
+
+```bash
+curl --request PATCH \
+  --url $baseUrl/organization/customers/{id} \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Biffco Enterprise Ltd",
+    "phoneNumber": "+2349000000001"
+  }'
+```
+
+---
+
+## Delete a customer
+
+Permanently delete a customer profile from your organization.
+
+### Request
+
+```bash
+curl --request DELETE \
+  --url $baseUrl/organization/customers/{id} \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+---
+
+## Best practices
+
+<Accordion title="Deduplicate before you create">
+  Before calling `POST /organization/customers`, search your existing records by email. NadaPay enforces uniqueness at the API level, but catching duplicates before the API call keeps your integration cleaner and avoids unnecessary `409` errors.
+</Accordion>
+
+<Accordion title="Keep customer data current">
+  Update customer profiles when contact details change — particularly the email address and phone number — so that invoice notifications and payment link communications reach the right person.
+</Accordion>
+
+<Accordion title="Never store payment credentials in customer records">
+  The customer object is for identity and contact information only. Do not store card numbers, bank account details, or any other payment credentials in the `metadata` field or any other customer attribute.
+</Accordion>
+
+## Next step
+
+Once you have a customer, attach them to an invoice to start collecting payments:
+
+<Card title="Invoices" icon="file-invoice" href="/docs/invoices">
+  Create invoices and attach a customer as the billable counterparty.
+</Card>

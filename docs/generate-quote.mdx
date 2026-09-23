@@ -1,0 +1,208 @@
+---
+title: 'Generate a Payout Quote with NadaPay'
+sidebarTitle: 'Generate Quote'
+description: 'Lock in an exchange rate and fees for a payout by generating a quote. The returned quoteId is required to execute the transaction.'
+---
+
+Before you can execute a payout, you must generate a quote. A quote locks in the exchange rate, calculates fees, and returns a `quoteId` that you pass directly to the execute endpoint. Quotes are time-limited — generate one only when you are ready to execute immediately, and save the `quoteId` as soon as you receive it. This page also covers how to check indicative exchange rates and validate transaction limits before you quote.
+
+## When to use quotes
+
+Generate a quote when you have confirmed all of the following:
+
+- The destination corridor is active (verified via Get Available Markets).
+- The beneficiary and beneficiary account are created and ready.
+- The amount falls within the corridor limits (verified via Check Transaction Limits).
+- The source account has sufficient balance.
+
+<Note>
+  Exchange rate quotes are time-limited. Do not generate a quote until you are ready to call Execute Transaction immediately after. If the quote expires, generate a new one before executing.
+</Note>
+
+## Check the indicative exchange rate first (optional)
+
+Use `POST /transactions/rate` to show a customer or operator an approximate conversion before they commit. This rate is **indicative only** — it is not locked and it will not be honoured at execution. Use it for display purposes (e.g. live-updating an amount field) only. Always generate a formal quote before executing.
+
+```bash
+curl --request POST \
+  --url $baseUrl/transactions/rate \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "currency": "KES"
+  }'
+```
+
+The response returns the current exchange rate for the requested currency against USD.
+
+## Check transaction limits before quoting
+
+Retrieve the minimum, maximum, and daily transaction limits for your corridor before generating a quote. If your amount falls outside these bounds, the quote will fail.
+
+```bash
+curl --request POST \
+  --url $baseUrl/transactions/limits \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "currency": "USD",
+    "country": "NG",
+    "rail": "bank_transfer"
+  }'
+```
+
+The response returns `minimumAmount`, `maximumAmount`, and `dailyLimit` for the requested corridor. Validate your intended transaction amount against all three values before quoting:
+
+```
+transaction_amount >= minimum_amount
+transaction_amount <= maximum_amount
+daily_volume + transaction_amount <= daily_limit
+```
+
+<Warning>
+  Limits can change. Fetch them fresh per session rather than hardcoding them in your application. Surface a clear error to the user if the amount is out of range — do not let the failure happen silently at execution time.
+</Warning>
+
+## Prerequisites
+
+Before calling `POST /transactions/quote`, confirm:
+
+1. You have a valid `x-api-key`.
+2. You have a unique `x-idempotency-key` for this request.
+3. Your source account ID is confirmed (the account you intend to debit).
+4. Your destination beneficiary account ID is confirmed and the account is active.
+5. The amount has been validated against corridor limits.
+
+## Generate a quote
+
+```bash
+curl --request POST \
+  --url $baseUrl/transactions/quote \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "source": {
+      "accountId": "acc-uuid-123",
+      "currency": "USD",
+      "amount": 100000,
+      "rail": "bank_transfer",
+      "type": "BANK"
+    },
+    "destination": {
+      "beneficiaryAccountId": "ben-acc-uuid-456",
+      "currency": "NGN",
+      "type": "BANK",
+      "country": "Nigeria",
+      "paymentMethod": "Bank Transfer"
+    },
+    "metadata": {
+      "reference": "invoice-2025-001"
+    }
+  }'
+```
+
+### Request fields
+
+<Tabs>
+  <Tab title="source">
+    <ParamField body="accountId" type="string" required>
+      The ID of the NadaPay account you intend to debit.
+    </ParamField>
+    <ParamField body="currency" type="string" required>
+      The source currency code (e.g. `USD`, `USDC`).
+    </ParamField>
+    <ParamField body="amount" type="integer" required>
+      The amount to send, in the smallest currency unit (e.g. cents for USD).
+    </ParamField>
+    <ParamField body="rail" type="string">
+      The payment rail for the source (e.g. `ACH`, `bank_transfer`).
+    </ParamField>
+    <ParamField body="type" type="string">
+      Source type: `BANK`, `CRYPTO`, or `INTERNAL`.
+    </ParamField>
+    <ParamField body="chain" type="string">
+      Blockchain network — required when `type` is `CRYPTO`.
+    </ParamField>
+    <ParamField body="address" type="string">
+      Wallet address — required when `type` is `CRYPTO`.
+    </ParamField>
+  </Tab>
+  <Tab title="destination">
+    <ParamField body="beneficiaryAccountId" type="string">
+      The ID of the beneficiary account to receive the funds. Use this for pre-registered recipients.
+    </ParamField>
+    <ParamField body="accountId" type="string">
+      The NadaPay account ID — use for internal wallet-to-wallet transfers.
+    </ParamField>
+    <ParamField body="currency" type="string" required>
+      The destination currency code.
+    </ParamField>
+    <ParamField body="type" type="string" required>
+      Destination type: `BANK`, `CRYPTO`, `MOBILE_MONEY`, or `INTERNAL`.
+    </ParamField>
+    <ParamField body="country" type="string">
+      Destination country name or code.
+    </ParamField>
+    <ParamField body="paymentMethod" type="string">
+      Human-readable payment method descriptor (e.g. `Bank Transfer`).
+    </ParamField>
+    <ParamField body="chain" type="string">
+      Blockchain network — required when `type` is `CRYPTO`.
+    </ParamField>
+    <ParamField body="address" type="string">
+      Wallet address — required when `type` is `CRYPTO`.
+    </ParamField>
+  </Tab>
+  <Tab title="metadata">
+    <ParamField body="metadata" type="object">
+      Optional key-value pairs you want associated with this transaction (e.g. your internal reference, invoice number, or user ID). Returned on the transaction object and in webhook payloads.
+    </ParamField>
+  </Tab>
+</Tabs>
+
+### Response
+
+A successful response returns the priced quote including the locked exchange rate, calculated fees, and — most importantly — the `quoteId`.
+
+<ResponseField name="quoteId" type="string">
+  The unique identifier for this locked quote. Pass this directly to `POST /transactions/execute`. This value is time-limited — use it immediately.
+</ResponseField>
+<ResponseField name="source" type="object">
+  The finalized source terms including the amount and currency that will be debited.
+</ResponseField>
+<ResponseField name="destination" type="object">
+  The finalized destination terms including the converted amount and the delivery currency.
+</ResponseField>
+<ResponseField name="rate" type="number">
+  The locked exchange rate applied to this quote.
+</ResponseField>
+<ResponseField name="fees" type="object">
+  Itemized fee breakdown for this transaction.
+</ResponseField>
+<ResponseField name="expiresAt" type="string">
+  ISO 8601 timestamp after which this quote is no longer valid for execution.
+</ResponseField>
+
+<Warning>
+  Save the `quoteId` immediately after receiving the response. You cannot regenerate the same quote — if you lose the ID or the quote expires, you must call `POST /transactions/quote` again to get a new one.
+</Warning>
+
+## Common failure reasons
+
+<Accordion title="Amount outside supported limits">
+  Your transaction amount is below the minimum or above the maximum for this corridor. Fetch fresh limits with `POST /transactions/limits` and adjust the amount before retrying.
+</Accordion>
+
+<Accordion title="Source and destination configuration are incompatible">
+  The `type`, `rail`, or `currency` values for the source and destination cannot be used together on this corridor. Verify that both sides are correctly configured for the intended payout rail.
+</Accordion>
+
+<Accordion title="Destination details do not match the selected rail">
+  The fields you provided in `destination` are inconsistent with the `type` or `paymentMethod` you specified. For example, a `BANK` destination requires `beneficiaryAccountId` or full bank account details — not a wallet address.
+</Accordion>
+
+<Accordion title="No quoteId in the response">
+  If the response does not contain a `quoteId`, the quote was not successfully created. Do not proceed to execution. Review the error message, correct the request, and retry.
+</Accordion>

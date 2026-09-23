@@ -1,0 +1,251 @@
+---
+title: 'List, View, and Manage Your NadaPay Virtual Cards'
+sidebarTitle: 'Manage Cards'
+description: 'List all cards, fetch safe metadata, retrieve secure PAN/CVV from your backend, activate a card by setting its PIN, and reassign it to a different wallet.'
+---
+
+Once you have issued one or more virtual cards, you use five distinct operations to manage them: listing all cards under your organization, fetching safe metadata for a single card, retrieving the full PAN and CVV from a secure backend, activating a card by setting its PIN, and reassigning a card to a different wallet. Each operation maps to a separate endpoint with its own security and usage constraints — read the security rules before you start.
+
+<Warning>
+  **`GET /organization/cards/:id/details` returns the raw PAN and CVV — handle it with extreme care.**
+
+  Call this endpoint **only from a secure server-side environment**. Never invoke it from a browser, a mobile client, or any client-side SDK. Do not log the response, do not pass the full response object through any intermediate service that does not strictly require it, and do not persist the PAN or CVV anywhere in your own systems.
+
+  For all other purposes — listing cards, status checks, dashboards, customer-facing displays — use `GET /organization/cards` or `GET /organization/cards/:id`, which return safe metadata only (`last4`, `status`, `nadapayCode`) and are safe to log and render freely.
+</Warning>
+
+---
+
+## List cards
+
+Retrieve a paginated list of all cards under your organization. This endpoint returns metadata only — no PAN or CVV is ever included.
+
+### Endpoint
+
+```
+GET /organization/cards
+```
+
+### Request
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organization/cards?page=1&limit=10&sortBy=createdAt&sortOrder=desc" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Query parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `page` | `1` | Page number to retrieve |
+| `limit` | `10` | Number of results per page |
+| `sortBy` | `createdAt` | Field to sort results by |
+| `sortOrder` | `desc` | Sort direction: `asc` or `desc` |
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Cards retrieved",
+  "data": {
+    "items": [
+      {
+        "id": "card_01hw3x7k2r4p5q6m8n9v",
+        "last4": "4242",
+        "status": "active",
+        "nadapayCode": "NP-0001",
+        "environment": "live",
+        "createdAt": "2024-07-01T10:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+<Tip>
+  Use this endpoint to power card management dashboards and status displays. The `last4` and `status` fields are safe to render and log freely.
+</Tip>
+
+---
+
+## Get card
+
+Fetch metadata for a single card by its ID. Like the list endpoint, this never exposes PAN or CVV and is safe for customer-facing or dashboard use.
+
+### Endpoint
+
+```
+GET /organization/cards/:id
+```
+
+### Request
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organization/cards/{id}" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Card metadata retrieved",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "last4": "4242",
+    "status": "active",
+    "nadapayCode": "NP-0001"
+  }
+}
+```
+
+<Info>
+  Use this endpoint for anything customer-facing or displayed on a dashboard. It is safe to log and render directly — it will never return sensitive card data.
+</Info>
+
+---
+
+## Get secure card details
+
+Retrieve the full PAN and CVV for a card. This is a security-critical operation restricted to secure server environments.
+
+### Endpoint
+
+```
+GET /organization/cards/:id/details
+```
+
+### When to use this
+
+Only call this endpoint when you have a specific, secure need for the full card number — for example, displaying it once inside a PCI-compliant iframe so the cardholder can view it. For all other scenarios (listing, status checks, dashboards), use `GET /organization/cards/:id` instead.
+
+### Request
+
+```bash
+curl --request GET \
+  --url "$baseUrl/organization/cards/{id}/details" \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Secure details retrieved",
+  "data": {
+    "pan": "4000000000004242",
+    "cvv": "123"
+  }
+}
+```
+
+<Warning>
+  **Server-side only.** Never call this endpoint from a browser, mobile app, or client-side SDK. Do not log the response. Do not persist `pan` or `cvv` in your systems. Pass these values only through a tightly scoped, PCI-aware flow.
+</Warning>
+
+---
+
+## Set a PIN
+
+Set the PIN on a card to activate it. A card remains `inactive` and cannot process any transactions until this step is completed.
+
+### Endpoint
+
+```
+POST /organization/cards/:id/pin
+```
+
+### Request
+
+```bash
+curl --request POST \
+  --url "$baseUrl/organization/cards/{id}/pin" \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "pin": "1234"
+  }'
+```
+
+### Request fields
+
+<ParamField body="pin" type="string" required>
+  A 4-digit numeric PIN for the card. Collect this through a tightly scoped input on your frontend and send it directly to this endpoint — do not store, log, or route it through any service that does not need it.
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Card PIN set and activated",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "status": "active"
+  }
+}
+```
+
+<Note>
+  Setting a PIN immediately moves the card's status from `inactive` to `active`. The card is now ready to process transactions.
+</Note>
+
+---
+
+## Switch card account
+
+Reassign a card to a different wallet. Use this when a card needs to draw from a different NadaPay wallet going forward — for example, moving a card from one sub-organization's account to another.
+
+### Endpoint
+
+```
+PATCH /organization/cards/:id/account
+```
+
+### What changes and what doesn't
+
+Switching accounts changes only which wallet the card debits. The card number, PIN, status, and all other properties remain exactly the same.
+
+### Request
+
+```bash
+curl --request PATCH \
+  --url "$baseUrl/organization/cards/{id}/account" \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "nadapayCode": "NP-0002"
+  }'
+```
+
+### Request fields
+
+<ParamField body="nadapayCode" type="string" required>
+  The `nadapayCode` of the new wallet to link this card to. The target wallet must belong to your organization.
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Card account switched successfully",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "nadapayCode": "NP-0002"
+  }
+}
+```

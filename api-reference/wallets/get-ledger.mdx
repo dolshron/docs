@@ -1,0 +1,133 @@
+---
+title: "GET /organizations/accounts/:id/ledger — Account Ledger"
+sidebarTitle: "Account Ledger"
+description: "Retrieve a paginated history of debit and credit entries for a specific wallet. Use this for reconciliation, dashboards, and transaction auditing."
+---
+
+The account ledger gives you a chronological record of every debit and credit that has moved through a specific wallet. You can paginate through the history, control the page size, and sort by creation date. Use this endpoint for reconciliation runs and dashboard displays — for real-time settlement logic, rely on webhooks rather than polling the ledger. You need the wallet's `id`, available from the List Financial Accounts endpoint.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/organizations/accounts/{accountId}/ledger`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/accounts/acc-uuid-123/ledger?page=1&limit=20&sortBy=createdAt&sortOrder=desc' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="accountId" type="string" required>
+  The unique identifier of the financial account whose ledger you want to retrieve.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="page" type="number">
+  The page number to retrieve. Defaults to `1`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Number of ledger entries to return per page. Defaults to `10`. Increase this to reduce the number of requests needed for bulk reconciliation.
+</ParamField>
+
+<ParamField query="sortBy" type="string">
+  Field to sort results by. Defaults to `createdAt`.
+</ParamField>
+
+<ParamField query="sortOrder" type="string">
+  Sort direction. Use `desc` for newest-first (default) or `asc` for oldest-first.
+
+  Allowed values: `asc`, `desc`
+</ParamField>
+
+## Response
+
+A successful `200 OK` response returns a paginated list of ledger entries.
+
+```json
+{
+  "data": [
+    {
+      "id": "ledger_01HXXXXXXXXXXXXXXXXXX",
+      "type": "credit",
+      "amount": "500.00",
+      "currency": "USD",
+      "balanceAfter": "10000.00",
+      "reference": "txn_ref_001",
+      "description": "Inbound transfer",
+      "createdAt": "2025-06-01T09:00:00Z"
+    },
+    {
+      "id": "ledger_01HYYYYYYYYYYYYYYYYYY",
+      "type": "debit",
+      "amount": "200.00",
+      "currency": "USD",
+      "balanceAfter": "9500.00",
+      "reference": "txn_ref_002",
+      "description": "Payout to Amara Diallo",
+      "createdAt": "2025-06-01T10:30:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 148
+  }
+}
+```
+
+<ResponseField name="data" type="array">
+  Array of ledger entry objects for this wallet.
+</ResponseField>
+
+<ResponseField name="data[].id" type="string">
+  Unique identifier for this ledger entry.
+</ResponseField>
+
+<ResponseField name="data[].type" type="string">
+  Entry type: `credit` for funds received into the wallet, `debit` for funds sent out.
+</ResponseField>
+
+<ResponseField name="data[].amount" type="string">
+  The amount of this entry as a decimal string, always expressed as a positive number regardless of direction.
+</ResponseField>
+
+<ResponseField name="data[].currency" type="string">
+  The currency of this ledger entry.
+</ResponseField>
+
+<ResponseField name="data[].balanceAfter" type="string">
+  The wallet balance immediately after this entry was applied.
+</ResponseField>
+
+<ResponseField name="data[].reference" type="string">
+  The transaction reference associated with this ledger entry. Use this to correlate entries with transaction records.
+</ResponseField>
+
+<ResponseField name="data[].description" type="string">
+  A human-readable description of the ledger entry.
+</ResponseField>
+
+<ResponseField name="data[].createdAt" type="string">
+  ISO 8601 timestamp when this ledger entry was recorded.
+</ResponseField>
+
+<ResponseField name="meta.page" type="number">
+  The current page number.
+</ResponseField>
+
+<ResponseField name="meta.limit" type="number">
+  Number of entries returned per page.
+</ResponseField>
+
+<ResponseField name="meta.total" type="number">
+  Total number of ledger entries available for this wallet across all pages.
+</ResponseField>

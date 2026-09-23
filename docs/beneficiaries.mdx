@@ -1,0 +1,245 @@
+---
+title: 'Manage Beneficiaries for Recurring Payouts'
+sidebarTitle: 'Beneficiaries'
+description: 'Register reusable payout recipients by creating a beneficiary profile and attaching a bank, mobile money, or crypto account destination.'
+---
+
+A beneficiary is a reusable recipient profile that you create once and reference in every subsequent payout. Rather than re-entering destination details for every transaction, you register the recipient up front, attach one or more payout accounts to their profile, and then reference the beneficiary account ID when generating quotes and executing transactions. This guide walks you through the complete four-step process: fetching provider networks, resolving a bank account, creating the beneficiary, and adding the beneficiary account.
+
+## Beneficiary vs. beneficiary account
+
+These two concepts are related but distinct:
+
+```
+Beneficiary            ← the recipient profile (name, email, phone)
+└── Beneficiary Account  ← the specific payout destination (bank account, wallet, crypto address)
+```
+
+Create the beneficiary once. Then attach one or more beneficiary accounts to the same profile — for example, both a local bank account and a mobile money number for the same person. Each beneficiary account gets its own ID that you reference in the payout flow.
+
+## Supported destination types
+
+Choose the correct destination type and supply the required fields for your rail.
+
+| Type | Use it for | Required fields | Conditional fields |
+| --- | --- | --- | --- |
+| **Bank** | Bank transfers and ACH-style rails | `accountNumber`, `accountName`, `networkId`, `country` | `bankCode`, `iban`, `swiftCode`, `sortCode`, `routingNumber`, `clabe`, `pixKey`, `cpf` |
+| **Mobile money** | Mobile wallet payouts | `phoneNumber`, `provider`, `country` | `networkId` |
+| **Crypto** | On-chain wallet address payouts | `chain`, `address` | — |
+
+<Tip>
+  For crypto destinations, omit `accountName`, `provider`, and `country` entirely. Send only `chain` and `address`.
+</Tip>
+
+## The resolve-before-create flow
+
+For any bank-based destination, you must resolve the account before attaching it to a beneficiary. Resolution confirms the account holder name and guards against misdirected transfers.
+
+```
+GET  /transactions/networks              ← find the correct networkId
+         ↓
+POST /transactions/resolve-bank-account  ← confirm account holder name
+         ↓
+POST /beneficiaries                      ← create the recipient profile
+         ↓
+POST /beneficiaries/{id}/accounts        ← attach the payout destination
+```
+
+## Step-by-step guide
+
+<Steps>
+  <Step title="Get provider networks for the destination country">
+    Fetch the available payment rails and their network IDs for the destination country. Use the returned `code` as the `networkId` when creating the beneficiary account — never hardcode these values.
+
+    ```bash
+    curl --request POST \
+      --url $baseUrl/transactions/networks \
+      --header 'x-api-key: YOUR_API_KEY' \
+      --header 'Content-Type: application/json' \
+      --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+      --data '{
+        "country": "GH"
+      }'
+    ```
+
+    **Response:**
+
+    ```json
+    {
+      "data": {
+        "country": "GH",
+        "networks": [
+          {
+            "code": "bank_transfer",
+            "name": "Local Bank Transfer",
+            "currency": "GHS",
+            "type": "bank_account"
+          },
+          {
+            "code": "mtn_momo",
+            "name": "MTN Mobile Money",
+            "currency": "GHS",
+            "type": "mobile_money"
+          },
+          {
+            "code": "vodafone_cash",
+            "name": "Vodafone Cash",
+            "currency": "GHS",
+            "type": "mobile_money"
+          }
+        ]
+      }
+    }
+    ```
+
+    Save the `code` for the rail you intend to use. You will pass it as the `networkId` in the next steps.
+
+    <Note>
+      Network availability varies by corridor. Always fetch this dynamically rather than hardcoding network options in your application or UI.
+    </Note>
+  </Step>
+
+  <Step title="Resolve the bank account (bank-based rails only)">
+    Before creating the beneficiary, confirm the account holder name by resolving the account. Pass the account number and the `networkId` you retrieved in step 1.
+
+    ```bash
+    curl --request POST \
+      --url $baseUrl/transactions/resolve-bank-account \
+      --header 'x-api-key: YOUR_API_KEY' \
+      --header 'Content-Type: application/json' \
+      --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+      --data '{
+        "accountNumber": "0123456789",
+        "networkId": "ntwk_01HXXXXXXXXXXXXXXXXXX"
+      }'
+    ```
+
+    Review the resolved account name in the response and confirm it matches the intended recipient before continuing. If the name does not match, stop and ask the customer or operations team to verify the account details.
+
+    <Warning>
+      Do not continue if the resolved account name does not match the intended recipient. A misdirected transfer is extremely difficult to reverse.
+    </Warning>
+  </Step>
+
+  <Step title="Create the beneficiary">
+    Register the recipient profile. Supply the fields that apply to your rail in the `details` object.
+
+    ```bash
+    curl --request POST \
+      --url $baseUrl/beneficiaries \
+      --header 'x-api-key: YOUR_API_KEY' \
+      --header 'Content-Type: application/json' \
+      --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+      --data '{
+        "name": "Jane Mensah",
+        "email": "jane@example.com",
+        "phone": "+233200000000",
+        "currency": "GHS",
+        "type": "INDIVIDUAL",
+        "details": {
+          "accountNumber": "0123456789",
+          "accountName": "Jane Mensah",
+          "networkId": "bank_transfer",
+          "rail": "bank_transfer",
+          "country": "GH"
+        }
+      }'
+    ```
+
+    **Response:**
+
+    ```json
+    {
+      "data": {
+        "id": "ben_01HXXXXXXXXXXXXXXXXXX",
+        "name": "Jane Mensah",
+        "type": "individual",
+        "status": "active",
+        "created_at": "2025-01-01T00:00:00Z"
+      }
+    }
+    ```
+
+    Save the returned `id` — you need it to attach the beneficiary account in the next step.
+
+    <Accordion title="Required fields by rail">
+
+      **Bank Transfer**
+
+      | Field | Required | Notes |
+      | --- | --- | --- |
+      | `accountNumber` | Yes | Recipient bank account number |
+      | `accountName` | Yes | Recipient account name (use the resolved name) |
+      | `networkId` | Yes | Provider or banking network identifier |
+      | `country` | Yes | Destination country |
+      | `bankCode` | Conditional | Use when required for the destination banking scheme |
+      | `iban` | Conditional | Use for IBAN-based corridors |
+      | `swiftCode` | Conditional | Use for international wire routing |
+      | `sortCode` | Conditional | Use for UK bank routing |
+      | `routingNumber` | Conditional | Use for US ACH routing |
+      | `clabe` | Conditional | Use for Mexico corridors |
+      | `pixKey` | Conditional | Use for Brazil PIX flows |
+      | `cpf` | Conditional | Use when the corridor requires recipient CPF |
+
+      **Mobile Money**
+
+      | Field | Required | Notes |
+      | --- | --- | --- |
+      | `phoneNumber` | Yes | Recipient mobile money number |
+      | `provider` | Yes | Mobile money provider |
+      | `country` | Yes | Destination country |
+      | `networkId` | Conditional | Use when provider routing depends on a network ID |
+
+      **Crypto**
+
+      | Field | Required | Notes |
+      | --- | --- | --- |
+      | `chain` | Yes | Blockchain network (e.g. `ETHEREUM`, `BASE`) |
+      | `address` | Yes | Recipient wallet address |
+
+    </Accordion>
+  </Step>
+
+  <Step title="Add the beneficiary account">
+    Attach the specific payout destination to the beneficiary profile. The `details` fields follow the same rail-based rules as step 3.
+
+    ```bash
+    curl --request POST \
+      --url $baseUrl/beneficiaries/ben_01HXXXXXXXXXXXXXXXXXX/accounts \
+      --header 'x-api-key: YOUR_API_KEY' \
+      --header 'Content-Type: application/json' \
+      --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+      --data '{
+        "currency": "GHS",
+        "type": "BANK",
+        "details": {
+          "accountNumber": "0123456789",
+          "accountName": "Jane Mensah",
+          "networkId": "bank_transfer",
+          "rail": "bank_transfer",
+          "country": "GH"
+        }
+      }'
+    ```
+
+    Save the beneficiary account ID returned in the response. You will reference it in the `destination.beneficiaryAccountId` field when generating a quote and executing a transaction.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<Accordion title="The network ID is invalid">
+  Fetch provider networks for the destination country using `POST /transactions/networks` and use the `code` value returned in the response. Never hardcode bank or provider identifiers — they vary by corridor and change over time.
+</Accordion>
+
+<Accordion title="The resolved name does not match the recipient">
+  Do not continue. Ask the customer or your operations team to confirm the correct account details before creating the beneficiary account. Proceeding with a mismatched name risks a misdirected transfer.
+</Accordion>
+
+<Accordion title="Beneficiary creation fails with a rail mismatch error">
+  Verify that the `rail` value in your request matches the fields you provided in `details`. For example, a `bank_transfer` rail requires `accountNumber` and `networkId`, not `phoneNumber` or `chain`. Check the required fields table for your rail and ensure all mandatory fields are present.
+</Accordion>
+
+<Accordion title="Missing required fields for the rail">
+  Each rail has its own set of required `details` fields. Review the fields table in step 3, confirm every required field is present in your request, and resubmit.
+</Accordion>

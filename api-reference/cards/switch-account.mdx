@@ -1,0 +1,94 @@
+---
+title: 'PATCH /organization/cards/:id/account — Switch Card Wallet'
+sidebarTitle: 'Switch Account'
+description: 'Reassign a virtual card to a different NadaPay wallet. The card number, PIN, and status remain unchanged — only the funding source changes.'
+---
+
+Use this endpoint to move a virtual card from one NadaPay wallet to another. After a successful call, all future transactions on that card will debit the new wallet you specified. The card number, CVV, expiry, PIN, and activation status are unaffected — only the linked funding source changes. This is useful when you need to reassign a card between sub-organizations, cost centers, or accounts without reissuing a new physical or virtual card number.
+
+## Endpoint
+
+```
+PATCH https://core.nadapay.io/api/v1/organization/cards/:id/account
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+| `Content-Type` | `application/json` |
+| `x-idempotency-key` | `YOUR_UNIQUE_UUID` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the card whose wallet you want to change. This is the `id` returned when you [issued the card](/api-reference/cards/issue).
+</ParamField>
+
+## Request Body
+
+<ParamField body="nadapayCode" type="string" required>
+  The NadaPay wallet code of the new account to link this card to. Example: `"WAL-456"`. The wallet must exist and be accessible under your organization.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request PATCH \
+  --url https://core.nadapay.io/api/v1/organization/cards/card_01hw3x7k2r4p5q6m8n9v/account \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "nadapayCode": "WAL-456"
+  }'
+```
+
+## Response
+
+A `200 OK` response confirms the card's wallet has been updated. The response echoes the card `id` and the new `nadapayCode`.
+
+<ResponseField name="success" type="boolean">
+  `true` when the account switch completes successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Card account switched successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The updated card record.
+
+  <Expandable title="data fields">
+    <ResponseField name="id" type="string">
+      The unique identifier of the card that was updated.
+    </ResponseField>
+
+    <ResponseField name="nadapayCode" type="string">
+      The new wallet code this card is now linked to, confirming the switch.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Card account switched successfully",
+  "data": {
+    "id": "card_01hw3x7k2r4p5q6m8n9v",
+    "nadapayCode": "WAL-456"
+  }
+}
+```
+
+<Note>
+  Switching a card's account only changes which wallet future transactions debit. The card number, PIN, and status are preserved exactly as they were. If you want to verify the full updated card state, call [Get Card](/api-reference/cards/get) after a successful switch.
+</Note>

@@ -1,0 +1,73 @@
+---
+title: 'GET /transactions/rate — Fetch Live Exchange Rates'
+sidebarTitle: 'Get Rate'
+description: 'Fetch an indicative exchange rate for any currency against USD. Use this for live UI previews; generate a Quote to lock in a rate before executing.'
+---
+
+The rate endpoint returns the current indicative exchange rate for a given currency against USD. Use it to show a real-time conversion preview as a customer types an amount into your UI. Because rates here are indicative and not locked, you must call [Generate Quote](/api-reference/transactions/generate-quote) before executing any transaction — only a quote guarantees the rate you will be charged.
+
+## Endpoint
+
+```
+POST https://core.nadapay.io/api/v1/transactions/rate
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-api-key` | Yes | Your NadaPay API key. |
+| `Content-Type` | Yes | Must be `application/json`. |
+
+## Request Parameters
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code to get the exchange rate against USD. For example, `"KES"` for Kenyan Shilling or `"GHS"` for Ghanaian Cedi.
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://core.nadapay.io/api/v1/transactions/rate \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currency": "KES"
+  }'
+```
+
+## Response Fields
+
+A `200` response returns the current exchange rate details for the requested currency.
+
+<ResponseField name="rate" type="number">
+  The current exchange rate: how many units of the destination currency equal one USD.
+</ResponseField>
+
+<ResponseField name="fee" type="number">
+  The indicative fee applied to a transaction at this rate.
+</ResponseField>
+
+<ResponseField name="sourceAmount" type="number">
+  The source amount used to compute this rate quote.
+</ResponseField>
+
+<ResponseField name="destinationAmount" type="number">
+  The estimated destination amount after applying the rate and fee.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "rate": 129.45,
+  "fee": 0.015,
+  "sourceAmount": 100,
+  "destinationAmount": 12730.58
+}
+```
+
+## What to Call Next
+
+- [Check Transaction Limits](/api-reference/transactions/get-limits) — confirm the amount falls within corridor bounds before quoting.
+- [Generate Quote](/api-reference/transactions/generate-quote) — lock in the rate and fees before executing a transaction.

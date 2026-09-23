@@ -1,0 +1,88 @@
+---
+title: 'GET /organization/products/:id — Get Product Details'
+sidebarTitle: 'Get'
+description: 'Fetch the full record for a single product by ID, including name, price, currency, billing type, product status, and any stored metadata.'
+---
+
+Use this endpoint to retrieve the complete details of a specific product — for example, to confirm a product's price and currency before attaching it to an invoice, or to display product information in your merchant dashboard. Pass the product `id` as a path parameter.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the product to retrieve, e.g. `prod_01hw3x7k2r4p5q6m8n9v`.
+</ParamField>
+
+```bash
+curl --request GET \
+  --url https://core.nadapay.io/api/v1/organization/products/prod_01hw3x7k2r4p5q6m8n9v \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+A `200` response returns the full product object.
+
+<ResponseField name="id" type="string">
+  The product's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The product name.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  The product description.
+</ResponseField>
+
+<ResponseField name="sku" type="string">
+  The product's stock-keeping unit or code.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  The billing type: `ONE_TIME` or `RECURRING`.
+</ResponseField>
+
+<ResponseField name="price" type="number">
+  The product price in micro-units.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The product currency code.
+</ResponseField>
+
+<ResponseField name="billingPeriod" type="string">
+  The billing cycle for recurring products.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The product status: `ACTIVE`, `DRAFT`, or `ARCHIVED`.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Whether the product is currently active.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Product details retrieved successfully",
+  "data": {
+    "id": "prod_01hw3x7k2r4p5q6m8n9v",
+    "name": "Premium Plan",
+    "description": "Access to all premium features with priority support.",
+    "sku": "PLAN-PREMIUM-001",
+    "type": "RECURRING",
+    "price": 12000000,
+    "currency": "USD",
+    "billingPeriod": "monthly",
+    "status": "ACTIVE",
+    "isActive": true,
+    "createdAt": "2026-04-24T10:00:00.000Z"
+  }
+}
+```

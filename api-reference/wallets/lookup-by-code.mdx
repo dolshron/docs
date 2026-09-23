@@ -1,0 +1,85 @@
+---
+title: "GET /organizations/accounts/code/:nadapayCode — Lookup"
+sidebarTitle: "Lookup by Code"
+description: "Look up a financial account by its NadaPay code (WAL-xxx) to verify a recipient's wallet identity before executing an internal transfer."
+---
+
+Every NadaPay wallet is assigned a short human-readable code in the format `WAL-xxx`. Use this endpoint to look up the account behind a code before you commit to an internal transfer — it lets you confirm the destination is real, active, and belongs to the expected organization. This is a lightweight verification step you should call whenever a recipient provides you with their NadaPay code as a payout destination.
+
+## Request
+
+**GET** `https://core.nadapay.io/api/v1/organizations/nadapay-code/{code}`
+
+```bash
+curl --request GET \
+  --url 'https://core.nadapay.io/api/v1/organizations/nadapay-code/WAL-001' \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Request Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your NadaPay API key.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="code" type="string" required>
+  The NadaPay code of the wallet you want to look up. Codes follow the format `WAL-xxx`, for example `WAL-001` or `WAL-42B9`. This is the value the recipient shares with you.
+</ParamField>
+
+## Response
+
+A successful `200 OK` response returns the full account object associated with the given NadaPay code.
+
+```json
+{
+  "id": "acc-uuid-123",
+  "name": "Recipient Organization Wallet",
+  "currency": "USD",
+  "nadapayCode": "WAL-001",
+  "balance": "10000.00",
+  "availableBalance": "9500.00",
+  "walletStatus": "ACTIVE",
+  "organization": {
+    "id": "org-uuid-456",
+    "name": "Recipient Org Name"
+  }
+}
+```
+
+<ResponseField name="id" type="string">
+  Unique identifier of the financial account. Use this as the destination account ID in your internal transfer call.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the wallet.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  Currency of the wallet, e.g. `USD`, `NGN`.
+</ResponseField>
+
+<ResponseField name="nadapayCode" type="string">
+  The NadaPay code of the account — confirms the code you looked up.
+</ResponseField>
+
+<ResponseField name="balance" type="string">
+  Total balance of the wallet as a decimal string.
+</ResponseField>
+
+<ResponseField name="availableBalance" type="string">
+  Available balance for outgoing transactions.
+</ResponseField>
+
+<ResponseField name="walletStatus" type="string">
+  Current operational status of the wallet, e.g. `ACTIVE`, `SUSPENDED`. Do not initiate a transfer to a wallet with a non-active status.
+</ResponseField>
+
+<ResponseField name="organization.id" type="string">
+  Unique identifier of the organization that owns this wallet.
+</ResponseField>
+
+<ResponseField name="organization.name" type="string">
+  Display name of the organization that owns this wallet. Confirm this matches the intended recipient before proceeding.
+</ResponseField>

@@ -1,0 +1,66 @@
+---
+title: 'DELETE /organization/payment-links/:id — Archive Payment Link'
+sidebarTitle: 'Archive'
+description: 'Archive a payment link by ID to stop it from accepting new payments. The link and its history are preserved — this is not a hard delete.'
+---
+
+Archiving a payment link stops it from accepting new payments without permanently erasing any record of it. The link's history — including past transactions and any shares you sent — is preserved for audit and support purposes. This is the recommended way to retire a payment link once it is no longer needed. If you use a `DELETE` request and want to reactivate the link later, you will need to create a new link, which will generate a different URL. For a reversible deactivation, consider updating the link's `status` via the [Update Payment Link](/api-reference/payment-links/update) endpoint instead.
+
+## Endpoint
+
+```
+DELETE https://core.nadapay.io/api/v1/organization/payment-links/:id
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `x-api-key` | `YOUR_API_KEY` |
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the payment link you want to archive. Use [List Payment Links](/api-reference/payment-links/list) to look up the correct `id` if needed.
+</ParamField>
+
+## Example Request
+
+```bash
+curl --request DELETE \
+  --url https://core.nadapay.io/api/v1/organization/payment-links/pl_abc123 \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the payment link is archived successfully.
+</ResponseField>
+
+<ResponseField name="statusCode" type="number">
+  HTTP status code — `200` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation, e.g. `"Payment link archived successfully"`.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  `null` — no updated object is returned after archiving.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Payment link archived successfully",
+  "data": null
+}
+```
+
+<Note>
+  Archiving preserves the link's history but stops it from accepting payments. If you need to reactivate a link, consider using the [Update](/api-reference/payment-links/update) endpoint to change its status rather than deleting and recreating it — reissuing a link generates a new URL, which breaks any references customers may already have.
+</Note>

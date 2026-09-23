@@ -1,0 +1,184 @@
+---
+title: 'Manage Child Organizations as a NadaPay Partner'
+sidebarTitle: 'Child Organizations'
+description: 'Register and manage sub-businesses under your partner account, set per-child fee markups, and guide each child through its own KYB verification process.'
+---
+
+Child organizations are sub-businesses that operate under your NadaPay partner account. As a partner, you can programmatically create, list, and manage these sub-businesses through the API — each child organization gets its own NadaPay account, wallet, and verification flow, while you retain administrative oversight as the parent. When you register a child organization, NadaPay creates both the child organization record and its associated owner user account in a single call. After registration, each child must complete its own KYB verification before it can transact in production.
+
+<Note>
+  The child organization APIs are only available to accounts that are registered as NadaPay partners. If you need partner access, contact the NadaPay team.
+</Note>
+
+## Register a child organization
+
+### Endpoint
+
+```
+POST /organizations/children
+```
+
+### Request
+
+```bash
+curl --request POST \
+  --url $baseUrl/organizations/children \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "businessName": "Acme Corp",
+    "businessType": "Technology",
+    "businessEmail": "info@acmecorp.com",
+    "phoneNumber": "+1234567890",
+    "address": "123 Main St",
+    "country": "USA",
+    "city": "New York",
+    "state": "NY",
+    "firstname": "Jane",
+    "lastname": "Doe",
+    "website": "https://www.acmecorp.com"
+  }'
+```
+
+<Tip>
+  Always provide a unique `x-idempotency-key` UUID with this request. If the request fails due to a network issue, retrying with the same idempotency key prevents duplicate organizations from being created.
+</Tip>
+
+### Request fields
+
+<ParamField body="businessName" type="string" required>
+  The legal or trading name of the child business.
+</ParamField>
+
+<ParamField body="businessType" type="string" required>
+  The industry or type of the business, e.g. `Technology`, `Finance`, `Retail`.
+</ParamField>
+
+<ParamField body="businessEmail" type="string" required>
+  The primary email address for the child organization. Used for account notifications and KYB correspondence.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+  The business phone number in international format (e.g. `+1234567890`).
+</ParamField>
+
+<ParamField body="address" type="string" required>
+  The registered street address of the business.
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  The country where the business is registered (e.g. `USA`, `NG`).
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  The city where the business is located.
+</ParamField>
+
+<ParamField body="state" type="string" required>
+  The state or province where the business is located.
+</ParamField>
+
+<ParamField body="firstname" type="string" required>
+  The first name of the primary contact person or owner for this child organization.
+</ParamField>
+
+<ParamField body="lastname" type="string" required>
+  The last name of the primary contact person or owner for this child organization.
+</ParamField>
+
+<ParamField body="website" type="string">
+  The business website URL, e.g. `https://www.acmecorp.com`.
+</ParamField>
+
+### Response
+
+```json
+{
+  "userId": "user-uuid-123",
+  "organizationId": "org-uuid-456"
+}
+```
+
+<Note>
+  This single call creates both the child organization and its owner user account. Store the `organizationId` — you will need it to configure fee markups and to check the child's KYB verification status.
+</Note>
+
+---
+
+## List child organizations
+
+Retrieve all sub-businesses registered under your partner account.
+
+### Endpoint
+
+```
+GET /organizations/children
+```
+
+### Request
+
+```bash
+curl --request GET \
+  --url $baseUrl/organizations/children \
+  --header 'x-api-key: YOUR_API_KEY'
+```
+
+Returns all child organizations managed under the authenticated partner organization.
+
+---
+
+## Configure partner markup
+
+As a partner, you can apply a custom fee markup on top of NadaPay's base rates for transactions that your child organizations process. This lets you earn revenue on the payment volume flowing through your platform.
+
+<Warning>
+  **Restricted to `PARTNER` class organizations.** This endpoint returns an error for standard organization accounts. Contact NadaPay if you need to upgrade your account class.
+</Warning>
+
+### Endpoint
+
+```
+POST /organizations/fees
+```
+
+### Request
+
+```bash
+curl --request POST \
+  --url $baseUrl/organizations/fees \
+  --header 'x-api-key: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --header 'x-idempotency-key: YOUR_UNIQUE_UUID' \
+  --data '{
+    "txType": "PAYOUT",
+    "markupBps": 50,
+    "reason": "Strategic adjustment"
+  }'
+```
+
+### Request fields
+
+<ParamField body="txType" type="string" required>
+  The transaction type this markup applies to. Accepts `PAYOUT`, `DEPOSIT`, or `FX_SWAP`.
+</ParamField>
+
+<ParamField body="markupBps" type="number" required>
+  The markup amount in basis points. For example, `50` equals 0.5%, and `100` equals 1.0%. This is applied on top of NadaPay's base rate for the specified transaction type.
+</ParamField>
+
+<ParamField body="reason" type="string">
+  An internal note explaining the reason for this markup configuration. Useful for audit trails and team communication.
+</ParamField>
+
+The response confirms the updated fee markup configuration for your partner organization.
+
+---
+
+## Next step
+
+Each child organization must pass KYB verification before it can process live transactions. Check and handle the verification status for each child you register:
+
+<Card title="Verification Status" icon="shield-check" href="/docs/verification">
+  Understand the KYB status values, handle each state correctly, and poll for status changes when a child is under review.
+</Card>
