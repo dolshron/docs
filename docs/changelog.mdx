@@ -1,0 +1,27 @@
+---
+title: 'NadaPay Changelog: Product and Documentation Updates'
+sidebarTitle: 'Changelog'
+description: 'Track new features, improvements, and fixes to the NadaPay API and documentation, including endpoint corrections and new guides.'
+rss: true
+---
+
+<Update label="September 23, 2026" description="NadaPay documentation launch" tags={["New", "Improvement", "Fix"]}>
+  ## New
+
+  - **NadaPay documentation.** Guides now cover the full platform: [collecting payments](/docs/collection-overview), [sending payouts](/docs/payout-overview), [wallets](/docs/wallet-overview), [virtual cards](/docs/card-overview), and platform features such as [customers](/docs/customers), [products](/docs/products), [child organizations](/docs/child-organizations), [webhooks](/docs/webhooks), and [verification](/docs/verification).
+  - **API reference.** Every endpoint group has its own reference page: transactions, beneficiaries, wallets, cards, checkout, payment links, customers, invoices, products, and organizations. Start with the [API overview](/api-reference/overview).
+  - **Quickstart.** The [quickstart](/docs/quickstart) walks you through making your first authenticated API call.
+
+  ## Improvements
+
+  - Code examples in the guides now use the full base URL, `https://core.nadapay.io/api/v1`, instead of a `$baseUrl` placeholder. You can copy and run them as-is.
+  - The [payout overview](/docs/payout-overview) lists every endpoint with its full `/api/v1` path. It also links directly to [batch payouts](/docs/batch-payouts).
+  - Page titles and descriptions are clearer, which makes pages easier to find in search.
+  - All code blocks have language tags for correct syntax highlighting.
+
+  ## Fixes
+
+  - [Get rate](/api-reference/transactions/get-rate) now documents the correct method, `GET`. Pass `currency` as a query parameter, for example `?currency=KES`.
+  - [Get limits](/api-reference/transactions/get-limits) now documents the correct method, `POST`.
+  - [Get secure card details](/api-reference/cards/get-secure-details) no longer lists an `expiry` field. The response returns only `pan` and `cvv`.
+</Update>
