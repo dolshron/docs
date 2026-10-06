@@ -79,6 +79,12 @@
               "docs/webhooks",
               "docs/verification"
             ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "docs/changelog"
+            ]
           }
         ]
       },
